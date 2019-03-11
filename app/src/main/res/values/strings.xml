@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">DEU</string>
+    <string name="button_newActivity">New</string>
+    <string name="activity2_name">Rec Activity</string>
+    <string name="activity_sensor_name">Sensor Activity</string>
+    <string name="activity_register_name">Register Activity</string>
+
+    <string name="text_header">Message Received</string>
+    <string name="editText_main">Enter your message</string>
+    <string name="button_reply">Reply</string>
+    <string name="editText_reply">Enter Your Reply Here</string>
+    <string name="text_header_reply">Reply Received</string>
+    <string name="button_start">START</string>
+    <string name="button_stop">STOP</string>
+    <string name="button_sensors">Sensores</string>
+    <string name="title1">Accelerometer</string>
+    <string name="title2">Gyroscope</string>
+    <string name="tittle3">Magnetometer</string>
+    <string name="tittle4">Light</string>
+    <string name="text_step">Step Counter</string>
+    <string name="button_register">Registrar Actividad</string>
+    <string name="textView_accTittle">Archivos guardados</string>
+    <string name="textView_gyrTittle">Gyroscope Data</string>
+    <string name="button_delete">Borrar Ultimo</string>
+
+</resources>
