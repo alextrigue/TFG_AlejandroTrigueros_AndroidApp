@@ -15,7 +15,7 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
     private static final String TAG = "SensorActivity";
 
     private SensorManager sensorManager;
-    private Sensor mAcce, mGyro, mMagno, mLight, mStepCounter;
+    private Sensor mAcce, mGyro, mMagno, mLight, mStepCounter, mLinAcce;
     //private Sensor  mHumi, mTemp, mPressure;
 
     TextView xValue, yValue, zValue,
@@ -54,6 +54,7 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         mMagno = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         mLight = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         mStepCounter = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+        mLinAcce = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
         //mHumi = sensorManager.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
         //mTemp = sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
         //mPressure = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
@@ -92,6 +93,14 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
     @Override
     protected void onResume() {
         super.onResume();
+
+        if (mLinAcce!= null) {
+            sensorManager.registerListener(this, mLinAcce, SensorManager.SENSOR_DELAY_NORMAL);
+            Log.d(TAG, "onResume: Registrando el sensor acelerometro lineal");
+        }else{
+            Log.d(TAG, "onResume: Linear Acceleration NO DISPONIBLE");
+
+        }
 
         if (mAcce!= null) {
             sensorManager.registerListener(this, mAcce, SensorManager.SENSOR_DELAY_NORMAL);
@@ -143,7 +152,6 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         //    Log.d(TAG, "onResume: Registrando el sensor de presion");
         //}else{pressure.setText("No disponible");}
     }
-
 
     @Override
     protected void onPause() {

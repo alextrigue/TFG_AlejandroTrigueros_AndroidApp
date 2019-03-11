@@ -19,10 +19,6 @@
             android:name=".SensorActivity"
             android:label="@string/activity_sensor_name"
             android:parentActivityName=".MainActivity" />
-        <activity
-            android:name=".RecActivity"
-            android:label="@string/activity2_name"
-            android:parentActivityName=".MainActivity" />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
