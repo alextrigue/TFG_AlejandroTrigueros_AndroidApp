@@ -33,7 +33,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     private int gyr_data_line = 0;
 
     public void startRegister(View view) {
-        Toast toast = Toast.makeText(this, "START: Registrando actividad de sosnsores", Toast.LENGTH_SHORT);
+        Toast toast = Toast.makeText(this, "START: Registrando actividad de sensores", Toast.LENGTH_SHORT);
         toast.show();
 
         //SENSOR_DELAY_NORMAL 200.000 microseconds
