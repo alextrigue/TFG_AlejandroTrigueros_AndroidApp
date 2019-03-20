@@ -23,8 +23,10 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     private Sensor mAcce, mGyro;
     private TextView textData;
 
-    private static final int m = 1200, n = 3;
-    // con 600 muestras (m) cada 200ms, tenemos 2 minutos de datos
+    private static final int m = 3000, n = 3;
+    private final int delay = SensorManager.SENSOR_DELAY_GAME;
+    // Para DELAY_GAME con 3000 muestras (m) cada 20,000 micro.s, tenemos 1 minutos de datos
+    // Para DELAY_NORMAL con 300 muestras (m) cada 200,000 micro.s, tenemos 1 minutos de datos
 
     private float[][] acc_data = null;
     private int acc_data_line = 0;
@@ -47,14 +49,14 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
         if (mAcce != null) {
             acc_data_line = 0;
-            sensorManager.registerListener(this, mAcce, SensorManager.SENSOR_DELAY_NORMAL);
+            sensorManager.registerListener(this, mAcce, delay);
             Log.d(TAG, "startRegister: Registrando el sensor acelerometro");
         } else {
             Log.d(TAG, "startRegister: Accelerometro NO DISPONIBLE");
         }
         if (mGyro != null) {
             gyr_data_line = 0;
-            sensorManager.registerListener(this, mGyro, SensorManager.SENSOR_DELAY_NORMAL);
+            sensorManager.registerListener(this, mGyro, delay);
             Log.d(TAG, "startRegister: Registrando el sensor giroscopio");
         } else {
             Log.d(TAG, "startRegister: Giroscopio NO DISPONIBLE");
