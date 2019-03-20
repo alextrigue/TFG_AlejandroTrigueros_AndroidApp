@@ -107,7 +107,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         int min = c.get(Calendar.MINUTE);
         int hour = c.get(Calendar.HOUR_OF_DAY);
         int day = c.get(Calendar.DAY_OF_MONTH);
-        int month = c.get(Calendar.MONTH);
+        int month = 1 + c.get(Calendar.MONTH);
         int year = c.get(Calendar.YEAR);
         String date = year + "-" + month + "-" + day + "_" + hour + "-" + min + "-" + sec;
         String filename = "";
