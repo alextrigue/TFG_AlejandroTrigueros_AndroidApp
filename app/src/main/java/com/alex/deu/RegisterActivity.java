@@ -24,9 +24,10 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     private TextView textData;
 
     private static final int m = 3000, n = 3;
-    private final int delay = SensorManager.SENSOR_DELAY_GAME;
-    // Para DELAY_GAME con 3000 muestras (m) cada 20,000 micro.s, tenemos 1 minutos de datos
-    // Para DELAY_NORMAL con 300 muestras (m) cada 200,000 micro.s, tenemos 1 minutos de datos
+    private final int delay = 10000;
+    // Para 10000 microseconds con 6000 muestras (m) tenemos 1 minutos de datos (100 muestras por s)
+    // Para DELAY_GAME con 3000 muestras (m), una cada 20,000 micro.s, tenemos 1 minutos de datos
+    // Para DELAY_NORMAL con 300 muestras (m), una  cada 200,000 micro.s, tenemos 1 minutos de datos
 
     private float[][] acc_data = null;
     private int acc_data_line = 0;
