@@ -1,5 +1,6 @@
 package com.alex.deu;
 
+import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.Context;
@@ -16,6 +17,7 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
 
     private SensorManager sensorManager;
     private Sensor mAcce, mGyro, mMagno, mLight, mStepCounter, mLinAcce;
+    private final int sensor_delay = 500000;//500.000 microseconds
     //private Sensor  mHumi, mTemp, mPressure;
 
     TextView xValue, yValue, zValue,
@@ -77,6 +79,15 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
             xGyroValue.setText("X: " + sensorEvent.values[0]);
             yGyroValue.setText("Y: " + sensorEvent.values[1]);
             zGyroValue.setText("Z: " + sensorEvent.values[2]);
+
+            if(sensorEvent.values[2] > 0.5f){
+                getWindow().getDecorView().setBackgroundColor(Color.RED);
+            }else if(sensorEvent.values[2] < -0.5f){
+                getWindow().getDecorView().setBackgroundColor(Color.YELLOW);
+            }else if(-0.5f < sensorEvent.values[2] && 0.5f > sensorEvent.values[2]){
+                getWindow().getDecorView().setBackgroundColor(Color.WHITE);
+            }
+
         }
         if (sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
             xMagnoValue.setText("X: " + sensorEvent.values[0]);
@@ -95,7 +106,7 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         super.onResume();
 
         if (mLinAcce!= null) {
-            sensorManager.registerListener(this, mLinAcce, SensorManager.SENSOR_DELAY_NORMAL);
+            sensorManager.registerListener(this, mLinAcce, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor acelerometro lineal");
         }else{
             Log.d(TAG, "onResume: Linear Acceleration NO DISPONIBLE");
@@ -103,7 +114,7 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         }
 
         if (mAcce!= null) {
-            sensorManager.registerListener(this, mAcce, SensorManager.SENSOR_DELAY_NORMAL);
+            sensorManager.registerListener(this, mAcce, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor acelerometro");
         }else{
             xValue.setText("No disponible");
@@ -111,7 +122,7 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
             zValue.setText("No disponible");
         }
         if (mGyro!= null) {
-            sensorManager.registerListener(this, mGyro, SensorManager.SENSOR_DELAY_NORMAL);
+            sensorManager.registerListener(this, mGyro, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor giroscopio");
         }else{
             xGyroValue.setText("No disponible");
@@ -119,7 +130,7 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
             zGyroValue.setText("No disponible");
         }
         if (mMagno!= null) {
-            sensorManager.registerListener(this, mMagno, SensorManager.SENSOR_DELAY_NORMAL);
+            sensorManager.registerListener(this, mMagno, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor de campo magnetico");
         }else{
             xMagnoValue.setText("No disponible");
@@ -127,13 +138,13 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
             zMagnoValue.setText("No disponible");
         }
         if (mLight!= null) {
-            sensorManager.registerListener(this, mLight, SensorManager.SENSOR_DELAY_NORMAL);
+            sensorManager.registerListener(this, mLight, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor de luminosidad");
         }else{
             light.setText("No disponible");
         }
         if (mStepCounter!= null) {
-            sensorManager.registerListener(this, mStepCounter, SensorManager.SENSOR_DELAY_NORMAL);
+            sensorManager.registerListener(this, mStepCounter, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor podometro");
         }else{
             step.setText("No disponible");
