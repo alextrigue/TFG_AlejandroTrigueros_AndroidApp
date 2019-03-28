@@ -11,7 +11,7 @@ import android.hardware.SensorManager;
 import android.util.Log;
 import android.widget.TextView;
 
-public class SensorActivity extends AppCompatActivity implements SensorEventListener{
+public class SensorActivity extends AppCompatActivity implements SensorEventListener {
 
     private static final String TAG = "SensorActivity";
 
@@ -61,6 +61,7 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         //mTemp = sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
         //mPressure = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
     }
+
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
@@ -70,7 +71,8 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
     public void onSensorChanged(SensorEvent sensorEvent) {
         Sensor sensor = sensorEvent.sensor;
         if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            Log.d(TAG, "onSensorChanged: X:" + sensorEvent.values[0] + " Y:" + sensorEvent.values[1] + " Z:" + sensorEvent.values[2]);
+            Log.d(TAG, "onSensorChanged: X:" + sensorEvent.values[0] +
+                    " Y:" + sensorEvent.values[1] + " Z:" + sensorEvent.values[2]);
             xValue.setText("X: " + sensorEvent.values[0]);
             yValue.setText("Y: " + sensorEvent.values[1]);
             zValue.setText("Z: " + sensorEvent.values[2]);
@@ -80,11 +82,11 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
             yGyroValue.setText("Y: " + sensorEvent.values[1]);
             zGyroValue.setText("Z: " + sensorEvent.values[2]);
 
-            if(sensorEvent.values[2] > 0.5f){
+            if (sensorEvent.values[2] > 0.5f) {
                 getWindow().getDecorView().setBackgroundColor(Color.RED);
-            }else if(sensorEvent.values[2] < -0.5f){
+            } else if (sensorEvent.values[2] < -0.5f) {
                 getWindow().getDecorView().setBackgroundColor(Color.YELLOW);
-            }else if(-0.5f < sensorEvent.values[2] && 0.5f > sensorEvent.values[2]){
+            } else if (-0.5f < sensorEvent.values[2] && 0.5f > sensorEvent.values[2]) {
                 getWindow().getDecorView().setBackgroundColor(Color.WHITE);
             }
 
@@ -97,56 +99,57 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         if (sensor.getType() == Sensor.TYPE_LIGHT) {
             light.setText("X: " + sensorEvent.values[0]);
         }
-        if (sensor.getType() == Sensor.TYPE_STEP_COUNTER){
+        if (sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
             step.setText("steps: " + sensorEvent.values[0]);
         }
     }
+
     @Override
     protected void onResume() {
         super.onResume();
 
-        if (mLinAcce!= null) {
+        if (mLinAcce != null) {
             sensorManager.registerListener(this, mLinAcce, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor acelerometro lineal");
-        }else{
+        } else {
             Log.d(TAG, "onResume: Linear Acceleration NO DISPONIBLE");
 
         }
 
-        if (mAcce!= null) {
+        if (mAcce != null) {
             sensorManager.registerListener(this, mAcce, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor acelerometro");
-        }else{
+        } else {
             xValue.setText("No disponible");
             yValue.setText("No disponible");
             zValue.setText("No disponible");
         }
-        if (mGyro!= null) {
+        if (mGyro != null) {
             sensorManager.registerListener(this, mGyro, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor giroscopio");
-        }else{
+        } else {
             xGyroValue.setText("No disponible");
             yGyroValue.setText("No disponible");
             zGyroValue.setText("No disponible");
         }
-        if (mMagno!= null) {
+        if (mMagno != null) {
             sensorManager.registerListener(this, mMagno, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor de campo magnetico");
-        }else{
+        } else {
             xMagnoValue.setText("No disponible");
             yMagnoValue.setText("No disponible");
             zMagnoValue.setText("No disponible");
         }
-        if (mLight!= null) {
+        if (mLight != null) {
             sensorManager.registerListener(this, mLight, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor de luminosidad");
-        }else{
+        } else {
             light.setText("No disponible");
         }
-        if (mStepCounter!= null) {
+        if (mStepCounter != null) {
             sensorManager.registerListener(this, mStepCounter, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor podometro");
-        }else{
+        } else {
             step.setText("No disponible");
         }
 

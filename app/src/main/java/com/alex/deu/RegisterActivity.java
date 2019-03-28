@@ -196,6 +196,16 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         mGyro = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 
         textData = findViewById(R.id.textView_accData);
+
+
+
+        //Mostrar lista de ficheros guardados
+        String text = "";
+        int i;
+        for (i = 0; i < fileList().length; i++) {
+            text += fileList()[i] + "\n";
+        }
+        textData.setText(text);
     }
 
     @Override
