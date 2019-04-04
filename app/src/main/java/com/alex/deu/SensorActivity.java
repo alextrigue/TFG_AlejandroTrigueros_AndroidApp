@@ -16,7 +16,7 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
     private static final String TAG = "SensorActivity";
 
     private SensorManager sensorManager;
-    private Sensor mAcce, mGyro, mMagno, mLight, mStepCounter, mLinAcce;
+    private Sensor mAcce, mGyro, mMagno, mLight, mStepCounter, mLinAcce, mGravity;
     private final int sensor_delay = 500000;//500.000 microseconds
     //private Sensor  mHumi, mTemp, mPressure;
 
@@ -60,6 +60,11 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         //mHumi = sensorManager.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
         //mTemp = sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
         //mPressure = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
+
+        /* GRAVITY SENSOR */
+        mGravity = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+
+
     }
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
@@ -69,6 +74,12 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         Sensor sensor = sensorEvent.sensor;
+
+        if(sensor.getType() == Sensor.TYPE_GRAVITY){
+            Log.d(TAG, "GRAVITY: X:" + sensorEvent.values[0] + " Y:" + sensorEvent.values[1] + " Z:" + sensorEvent.values[2]);
+
+        }
+
         if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             Log.d(TAG, "onSensorChanged: X:" + sensorEvent.values[0] + " Y:" + sensorEvent.values[1] + " Z:" + sensorEvent.values[2]);
             xValue.setText("X: " + sensorEvent.values[0]);
@@ -104,6 +115,14 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
     @Override
     protected void onResume() {
         super.onResume();
+
+        if(mGravity != null){
+            sensorManager.registerListener(this, mGravity, sensor_delay);
+            Log.d(TAG, "onResume: Registrando el sensor de gravedad");
+        }else{
+            Log.d(TAG, "onResume: Gravity sensor NO DISPONIBLE");
+
+        }
 
         if (mLinAcce!= null) {
             sensorManager.registerListener(this, mLinAcce, sensor_delay);
@@ -167,6 +186,7 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
     @Override
     protected void onPause() {
         super.onPause();
+        sensorManager.unregisterListener(this, mGravity);
         sensorManager.unregisterListener(this, mAcce);
         sensorManager.unregisterListener(this, mGyro);
         sensorManager.unregisterListener(this, mMagno);
