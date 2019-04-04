@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.Calendar;
@@ -21,7 +22,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     private static final String TAG = "RegisterActivity";
 
     private SensorManager sensorManager;
-    private Sensor mAcce, mGyro;
+    private Sensor mAcce, mGyro, mGravity;
     private TextView textData;
 
     private static final int m = 3000, n = 3;
@@ -32,6 +33,11 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
     private float[][] acc_data = null;
     private int acc_data_line = 0;
+
+    private float[][] lin_acc_data = null;
+
+    private float[] gravity = null;
+
 
     private float[][] gyr_data = null;
     private int gyr_data_line = 0;
@@ -46,9 +52,18 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         //SENSOR_DELAY_FASTEST 0 microseconds
         //Se puede inidicar el delay en microseconds tambien
 
-        acc_data = new float[m][n];
-        gyr_data = new float[m][n];
+        //acc_data = new float[m][n];
+        acc_data = new float[m][n + 1];//la cuarta columna es el timestamp
+        lin_acc_data = new float[m][n + 1];
+        gyr_data = new float[m][n + 1];
+        gravity = new float[3];
 
+        if (mGravity != null) {
+            sensorManager.registerListener(this, mGravity, delay);
+            Log.d(TAG, "startRegister: Registrando el sensor ade Gravedad");
+        } else {
+            Log.d(TAG, "startRegister: Sensor de Gravedad NO DISPONIBLE");
+        }
         if (mAcce != null) {
             acc_data_line = 0;
             sensorManager.registerListener(this, mAcce, delay);
@@ -69,6 +84,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     public void stopRegister(View view) {
         sensorManager.unregisterListener(this, mAcce);
         sensorManager.unregisterListener(this, mGyro);
+        sensorManager.unregisterListener(this, mGravity);
         Log.d(TAG, "stopRegister: listeners unregistered");
         //Log.d(TAG, "stopRegister: "+ dataToString(acc_data));
         //textData.setText("Datos guardados");
@@ -80,6 +96,10 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         if (gyr_data != null) {
             makeDataFile(dataToString(gyr_data), 2);
             gyr_data = null;
+        }
+        if(lin_acc_data != null){
+            makeDataFile(dataToString(lin_acc_data), 3);
+            lin_acc_data = null;
         }
 
         //Mostrar lista de ficheros guardados
@@ -93,9 +113,9 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     }
 
     public void makeDataFile(String data, int tipo) {
-        // Tipo 1 == acelerometro
-        // Tipo 2 == giroscopio
-        // Tipo 3 == acelerometro lineal
+        // Tipo 1: acelerometro
+        // Tipo 2: giroscopio
+        // Tipo 3: acelerometro lineal
 
 
         Log.d(TAG, "stopRegister: Creating FILE");
@@ -112,13 +132,20 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         int month = 1 + c.get(Calendar.MONTH);
         int year = c.get(Calendar.YEAR);
         String date = year + "-" + month + "-" + day + "_" + hour + "-" + min + "-" + sec;
-        String filename = "";
+        String filename;
 
-        if (tipo == 1) {
-            filename = "acc_" + date + ".txt";
-        } else if (tipo == 2) {
-            filename = "gyr_" + date + ".txt";
+
+        switch (tipo) {
+            case 1:
+                filename = "acc_" + date + ".txt"; break;
+            case 2:
+                filename = "gyr_" + date + ".txt"; break;
+            case 3:
+                filename = "lin_" + date + ".txt";break;
+            default:
+                filename = date + ".txt"; break;
         }
+
 
         //Crear fichero
         File directory = this.getFilesDir();
@@ -128,6 +155,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         //Escribir datos en el fichero
         try {
             outputStream = openFileOutput(filename, Context.MODE_PRIVATE);
+            // Escritura del String de datos (String data) en el fichero de texto
             outputStream.write(data.getBytes());
             outputStream.close();
         } catch (Exception e) {
@@ -138,38 +166,42 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     }
 
     public String dataToString(float datos[][]) {
-        String text = "";
+        String stringData = "";
         int i;
         for (i = 0; i < m; i++) {
 
             if (datos[i][0] == 0f) {
-                return text;
+                return stringData;
             } else {
+                // TODO: Cambiar concatenacion de strings por StringBuilder()
                 if (i == 0) {
-                    text += Float.toString(datos[i][0]) + "\t" +
+                    stringData += Float.toString(datos[i][0]) + "\t" +
                             Float.toString(datos[i][1]) + "\t" +
-                            Float.toString(datos[i][2]);
+                            Float.toString(datos[i][2]) + "\t" +
+                            Float.toHexString(datos[i][3]);
                 } else {
-                    text += "\n" + Float.toString(datos[i][0]) + "\t" +
+                    stringData += "\n" +
+                            Float.toString(datos[i][0]) + "\t" +
                             Float.toString(datos[i][1]) + "\t" +
-                            Float.toString(datos[i][2]);
+                            Float.toString(datos[i][2]) + "\t" +
+                            Float.toString(datos[i][3]);
                 }
             }
         }
-        return text;
+        return stringData;
     }
 
     public void deleteLastFile(View view) {
         Toast toast;
         //toast = Toast.makeText(this, "Borando...", Toast.LENGTH_SHORT);
         //toast.show();
-        if(fileList().length > 0) {
+        if (fileList().length > 0) {
             int last = fileList().length - 1;
             this.deleteFile(fileList()[last]);
 
             toast = Toast.makeText(this, "File deleted", Toast.LENGTH_SHORT);
             toast.show();
-        }else{
+        } else {
             toast = Toast.makeText(this, "fileList() Empty", Toast.LENGTH_SHORT);
             toast.show();
         }
@@ -194,6 +226,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
         mAcce = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mGyro = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        mGravity = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
 
         textData = findViewById(R.id.textView_accData);
 
@@ -208,23 +241,47 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         textData.setText(text);
     }
 
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-    }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
         Sensor sensor = event.sensor;
+
+        if (sensor.getType() == Sensor.TYPE_GRAVITY) {
+            Log.d(TAG, "Gravity Changed: X:" + event.values[0] + " Y:" + event.values[1] + " Z:" + event.values[2]);
+            gravity[0] = event.values[0];
+            gravity[1] = event.values[1];
+            gravity[2] = event.values[2];
+        }
+
         if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            Log.d(TAG, "Acce Changed: X:" + event.values[0] + " Y:" + event.values[1] + " Z:" + event.values[2]);
+            Log.d(TAG, "Acce Changed: X:" + event.values[0] + " Y:" + event.values[1] + " Z:" + event.values[2] + " TS:" + event.timestamp);
             if (acc_data_line < m) {
                 acc_data[acc_data_line][0] = event.values[0];
                 acc_data[acc_data_line][1] = event.values[1];
                 acc_data[acc_data_line][2] = event.values[2];
-                acc_data_line++;
+                acc_data[acc_data_line][3] = event.timestamp;
+
+                /*
+                CALCULO DE ACELERACION LINEAL
+                Fuente: https://developer.android.com/guide/topics/sensors/sensors_motion#java
+                */
+                // In this example, alpha is calculated as t / (t + dT),
+                // where t is the low-pass filter's time-constant and
+                // dT is the event delivery rate.
+                final float alpha = 0.1f;
+                // Isolate the force of gravity with the low-pass filter.
+                gravity[0] = alpha * gravity[0] + (1 - alpha) * event.values[0];
+                gravity[1] = alpha * gravity[1] + (1 - alpha) * event.values[1];
+                gravity[2] = alpha * gravity[2] + (1 - alpha) * event.values[2];
+                // Remove the gravity contribution with the high-pass filter.
+                lin_acc_data[acc_data_line][0] = event.values[0] - gravity[0];
+                lin_acc_data[acc_data_line][1] = event.values[1] - gravity[1];
+                lin_acc_data[acc_data_line][2] = event.values[2] - gravity[2];
+                lin_acc_data[acc_data_line][3] = event.timestamp;
             }
+            acc_data_line++;
         }
+
         if (sensor.getType() == Sensor.TYPE_GYROSCOPE) {
             Log.d(TAG, "Gyro Changed: X:" + event.values[0] + " Y:" + event.values[1] + " Z:" + event.values[2]);
             if (gyr_data_line < m) {
@@ -236,11 +293,17 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         }
     }
 
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
 
     @Override
     protected void onPause() {
         super.onPause();
         sensorManager.unregisterListener(this, mAcce);
         sensorManager.unregisterListener(this, mGyro);
+        sensorManager.unregisterListener(this, mGravity);
+
     }
 }
