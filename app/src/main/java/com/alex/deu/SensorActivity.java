@@ -16,14 +16,15 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
     private static final String TAG = "SensorActivity";
 
     private SensorManager sensorManager;
-    private Sensor mAcce, mGyro, mMagno, mLight, mStepCounter, mLinAcce, mGravity;
+    private Sensor mAcce, mGyro, mMagno, mLight, mStepCounter, mLinAcce, mGravity, rVector;
     private final int sensor_delay = 500000;//500.000 microseconds
     //private Sensor  mHumi, mTemp, mPressure;
 
     TextView xValue, yValue, zValue,
             xGyroValue, yGyroValue, zGyroValue,
             xMagnoValue, yMagnoValue, zMagnoValue,
-            light, step;
+            light,
+            step;
     //TextView humi, temp, pressure;
 
     @Override
@@ -64,6 +65,9 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         /* GRAVITY SENSOR */
         mGravity = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
 
+        rVector = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+
+
 
     }
     @Override
@@ -77,16 +81,21 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
 
         if(sensor.getType() == Sensor.TYPE_GRAVITY){
             Log.d(TAG, "GRAVITY: X:" + sensorEvent.values[0] + " Y:" + sensorEvent.values[1] + " Z:" + sensorEvent.values[2]);
-
         }
 
+        if (sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
+            Log.d(TAG, "VECTOR: X:" + sensorEvent.values[0] + " Y:" + sensorEvent.values[1] + " Z:" + sensorEvent.values[2]);
+        }
+
+
         if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            Log.d(TAG, "onSensorChanged: X:" + sensorEvent.values[0] + " Y:" + sensorEvent.values[1] + " Z:" + sensorEvent.values[2]);
+            Log.d(TAG, "ACCELEROMETER: X:" + sensorEvent.values[0] + " Y:" + sensorEvent.values[1] + " Z:" + sensorEvent.values[2]);
             xValue.setText("X: " + sensorEvent.values[0]);
             yValue.setText("Y: " + sensorEvent.values[1]);
             zValue.setText("Z: " + sensorEvent.values[2]);
         }
         if (sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+            Log.d(TAG, "GYROSCOPE: X:" + sensorEvent.values[0] + " Y:" + sensorEvent.values[1] + " Z:" + sensorEvent.values[2]);
             xGyroValue.setText("X: " + sensorEvent.values[0]);
             yGyroValue.setText("Y: " + sensorEvent.values[1]);
             zGyroValue.setText("Z: " + sensorEvent.values[2]);
@@ -116,12 +125,19 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
     protected void onResume() {
         super.onResume();
 
+
+        if(rVector != null){
+            sensorManager.registerListener(this, rVector, SensorManager.SENSOR_DELAY_NORMAL, SensorManager.SENSOR_STATUS_ACCURACY_LOW);
+            Log.d(TAG, "onResume: Registrando Rotation Vector");
+        }else{
+            Log.d(TAG, "onResume: Rotation Vector NO DISPONIBLE");
+        }
+
         if(mGravity != null){
             sensorManager.registerListener(this, mGravity, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor de gravedad");
         }else{
             Log.d(TAG, "onResume: Gravity sensor NO DISPONIBLE");
-
         }
 
         if (mLinAcce!= null) {
@@ -186,6 +202,7 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
     @Override
     protected void onPause() {
         super.onPause();
+        sensorManager.unregisterListener(this, rVector);
         sensorManager.unregisterListener(this, mGravity);
         sensorManager.unregisterListener(this, mAcce);
         sensorManager.unregisterListener(this, mGyro);
