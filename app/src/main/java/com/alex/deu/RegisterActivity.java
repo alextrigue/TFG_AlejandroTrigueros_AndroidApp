@@ -17,6 +17,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.Calendar;
 
+import static java.lang.Math.pow;
+import static java.lang.Math.sqrt;
+
 public class RegisterActivity extends AppCompatActivity implements SensorEventListener {
 
     private static final String TAG = "RegisterActivity";
@@ -42,6 +45,8 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     private float[][] gyr_data = null;
     private int gyr_data_line = 0;
 
+    private float[] a_z = null;
+
     public void startRegister(View view) {
         Toast toast = Toast.makeText(this, "START: Registrando actividad de sensores", Toast.LENGTH_SHORT);
         toast.show();
@@ -57,6 +62,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         lin_acc_data = new float[m][n + 1];
         gyr_data = new float[m][n + 1];
         gravity = new float[3];
+        a_z = new float[m];
 
         if (mGravity != null) {
             sensorManager.registerListener(this, mGravity, delay);
@@ -265,21 +271,48 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 CALCULO DE ACELERACION LINEAL
                 Fuente: https://developer.android.com/guide/topics/sensors/sensors_motion#java
                 */
+
+
+
                 // In this example, alpha is calculated as t / (t + dT),
                 // where t is the low-pass filter's time-constant and
                 // dT is the event delivery rate.
-                final float alpha = 0.1f;
+                final float alpha = 0.8f;
                 // Isolate the force of gravity with the low-pass filter.
                 gravity[0] = alpha * gravity[0] + (1 - alpha) * event.values[0];
                 gravity[1] = alpha * gravity[1] + (1 - alpha) * event.values[1];
                 gravity[2] = alpha * gravity[2] + (1 - alpha) * event.values[2];
+
+
+                /*
                 // Remove the gravity contribution with the high-pass filter.
                 lin_acc_data[acc_data_line][0] = event.values[0] - gravity[0];
                 lin_acc_data[acc_data_line][1] = event.values[1] - gravity[1];
                 lin_acc_data[acc_data_line][2] = event.values[2] - gravity[2];
                 lin_acc_data[acc_data_line][3] = event.timestamp;
+
+                */
+
+
+                /*
+                * Calculo de la proyeccionm de la aceleracion sobre el eje de gravedad
+                * */
+                // producto escalar: a·b = a1*b1 + a2*b2 + a3*b3
+
+                double gx, gy, gz;
+                gx = (double) gravity[0];
+                gy = (double) gravity[1];
+                gz = (double) gravity[2];
+
+                float mod_grav = (float) sqrt(pow(gx,2) + pow(gy,2) + pow(gz,2));
+
+                a_z[acc_data_line] = (event.values[0]*gravity[0] + event.values[1]*gravity[1] +
+                        event.values[2]*gravity[2])/mod_grav;
+                Log.d(TAG, "AZ: " + a_z[acc_data_line]);
+
+                acc_data_line++;
             }
-            acc_data_line++;
+
         }
 
         if (sensor.getType() == Sensor.TYPE_GYROSCOPE) {
