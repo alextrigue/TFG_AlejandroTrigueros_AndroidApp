@@ -1,7 +1,6 @@
 package com.alex.deu;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.hardware.Sensor;
@@ -10,6 +9,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,15 +24,16 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
     private static final String TAG = "RegisterActivity";
 
-    private SensorManager sensorManager;
-    private Sensor mAcce, mGyro, mGravity;
-    private TextView textData;
-
     private static final int m = 3000, n = 3;
-    private final int delay = 10000;
+    private static final int delay = 10000;
     // Para 10000 microseconds con 6000 muestras (m) tenemos 1 minutos de datos (100 muestras por s)
     // Para DELAY_GAME con 3000 muestras (m), una cada 20,000 micro.s, tenemos 1 minutos de datos
     // Para DELAY_NORMAL con 300 muestras (m), una  cada 200,000 micro.s, tenemos 1 minutos de datos
+
+    private SensorManager sensorManager;
+    private Sensor mAcce, mGyro, mGravity;
+    private TextView textData;
+    private EditText editText;
 
     private float[][] acc_data = null;
     private int acc_data_line = 0;
@@ -46,6 +47,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     private int gyr_data_line = 0;
 
     private float[] a_z = null;
+    private float[] a_z_lin = null;
 
     public void startRegister(View view) {
         Toast toast = Toast.makeText(this, "START: Registrando actividad de sensores", Toast.LENGTH_SHORT);
@@ -63,6 +65,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         gyr_data = new float[m][n + 1];
         gravity = new float[3];
         a_z = new float[m];
+        a_z_lin = new float[m];
 
         if (mGravity != null) {
             sensorManager.registerListener(this, mGravity, delay);
@@ -96,17 +99,42 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         //textData.setText("Datos guardados");
 
         if (acc_data != null) {
-            makeDataFile(dataToString(acc_data), 1);
+            makeDataFile(sensorDataToString(acc_data), 1);
             acc_data = null;
         }
         if (gyr_data != null) {
-            makeDataFile(dataToString(gyr_data), 2);
+            makeDataFile(sensorDataToString(gyr_data), 2);
             gyr_data = null;
         }
         if(lin_acc_data != null){
-            makeDataFile(dataToString(lin_acc_data), 3);
+            makeDataFile(sensorDataToString(lin_acc_data), 3);
             lin_acc_data = null;
         }
+        if (a_z != null){
+            // Creacion del String de a_z para escribir en fichero
+            String azStr;
+            int iter = 0;
+            azStr = Float.toString(a_z[0]);
+            while (iter < acc_data_line){
+                iter++;
+                azStr += "\n" + Float.toString(a_z[iter]);
+            }
+            // Crear fichero
+            makeDataFile(azStr, 4);
+        }
+        if (a_z_lin!= null){
+            // Creacion del String de a_z para escribir en fichero
+            String azStr="";
+            int iter = 0;
+            azStr = Float.toString(a_z_lin[0]);
+            while (iter < acc_data_line){
+                iter++;
+                azStr += "\n" + Float.toString(a_z_lin[iter]);
+            }
+            // Crear fichero
+            makeDataFile(azStr, 5);
+        }
+
 
         //Mostrar lista de ficheros guardados
         String text = "";
@@ -122,6 +150,8 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         // Tipo 1: acelerometro
         // Tipo 2: giroscopio
         // Tipo 3: acelerometro lineal
+        // Tipo 4: proyecccion de aceleracion sobre vector gravedad a_z
+        // Tipo 5: proyecccion de aceleracion lineal sobre vector gravedad a_z_lin
 
 
         Log.d(TAG, "stopRegister: Creating FILE");
@@ -140,16 +170,50 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         String date = year + "-" + month + "-" + day + "_" + hour + "-" + min + "-" + sec;
         String filename;
 
+        String edit_name = editText.getText().toString();
 
-        switch (tipo) {
-            case 1:
-                filename = "acc_" + date + ".txt"; break;
-            case 2:
-                filename = "gyr_" + date + ".txt"; break;
-            case 3:
-                filename = "lin_" + date + ".txt";break;
-            default:
-                filename = date + ".txt"; break;
+        if (edit_name.equals("")) {
+            switch (tipo) {
+                case 1:
+                    filename = "acc_" + date + ".txt";
+                    break;
+                case 2:
+                    filename = "gyr_" + date + ".txt";
+                    break;
+                case 3:
+                    filename = "lin_" + date + ".txt";
+                    break;
+                case 4:
+                    filename = "az_" + date + ".txt";
+                    break;
+                case 5:
+                    filename = "azlin_" + date + ".txt";
+                    break;
+                default:
+                    filename = date + ".txt";
+                    break;
+            }
+        } else{
+            switch (tipo) {
+                case 1:
+                    filename = "acc_" + edit_name + ".txt";
+                    break;
+                case 2:
+                    filename = "gyr_" + edit_name + ".txt";
+                    break;
+                case 3:
+                    filename = "lin_" + edit_name + ".txt";
+                    break;
+                case 4:
+                    filename = "az_" + edit_name + ".txt";
+                    break;
+                case 5:
+                    filename = "azlin_" + edit_name + ".txt";
+                    break;
+                default:
+                    filename = date + ".txt";
+                    break;
+            }
         }
 
 
@@ -171,7 +235,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         Log.d(TAG, "stopRegister: Creating FILE... DONE" + directory + "/" + filename);
     }
 
-    public String dataToString(float datos[][]) {
+    public String sensorDataToString(float datos[][]) {
         String stringData = "";
         int i;
         for (i = 0; i < m; i++) {
@@ -184,7 +248,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                     stringData += Float.toString(datos[i][0]) + "\t" +
                             Float.toString(datos[i][1]) + "\t" +
                             Float.toString(datos[i][2]) + "\t" +
-                            Float.toHexString(datos[i][3]);
+                            Float.toString(datos[i][3]);
                 } else {
                     stringData += "\n" +
                             Float.toString(datos[i][0]) + "\t" +
@@ -236,7 +300,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
         textData = findViewById(R.id.textView_accData);
 
-
+        editText = findViewById(R.id.editText_file_name);
 
         //Mostrar lista de ficheros guardados
         String text = "";
@@ -277,21 +341,21 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 // In this example, alpha is calculated as t / (t + dT),
                 // where t is the low-pass filter's time-constant and
                 // dT is the event delivery rate.
-                final float alpha = 0.8f;
+                final float alpha = 0.2f;
                 // Isolate the force of gravity with the low-pass filter.
                 gravity[0] = alpha * gravity[0] + (1 - alpha) * event.values[0];
                 gravity[1] = alpha * gravity[1] + (1 - alpha) * event.values[1];
                 gravity[2] = alpha * gravity[2] + (1 - alpha) * event.values[2];
 
 
-                /*
+
                 // Remove the gravity contribution with the high-pass filter.
                 lin_acc_data[acc_data_line][0] = event.values[0] - gravity[0];
                 lin_acc_data[acc_data_line][1] = event.values[1] - gravity[1];
                 lin_acc_data[acc_data_line][2] = event.values[2] - gravity[2];
                 lin_acc_data[acc_data_line][3] = event.timestamp;
 
-                */
+
 
 
                 /*
@@ -308,7 +372,16 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
                 a_z[acc_data_line] = (event.values[0]*gravity[0] + event.values[1]*gravity[1] +
                         event.values[2]*gravity[2])/mod_grav;
+
+
+
+                a_z_lin[acc_data_line] = (lin_acc_data[acc_data_line][0]*gravity[0] + lin_acc_data[acc_data_line][1]*gravity[1] +
+                        lin_acc_data[acc_data_line][2]*gravity[2])/mod_grav;
+
+                Log.d(TAG, "GRAV: " + mod_grav);
+                Log.d(TAG, "LIN_ACC: " + "x:" +lin_acc_data[acc_data_line][0] + " Y:" + lin_acc_data[acc_data_line][1] + " Z:" + lin_acc_data[acc_data_line][2]);
                 Log.d(TAG, "AZ: " + a_z[acc_data_line]);
+                Log.d(TAG, "AZ_LIN: " + a_z_lin[acc_data_line]);
 
                 acc_data_line++;
             }
