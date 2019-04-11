@@ -106,28 +106,28 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
             makeDataFile(sensorDataToString(gyr_data), 2);
             gyr_data = null;
         }
-        if(lin_acc_data != null){
+        if (lin_acc_data != null) {
             makeDataFile(sensorDataToString(lin_acc_data), 3);
             lin_acc_data = null;
         }
-        if (a_z != null){
+        if (a_z != null) {
             // Creacion del String de a_z para escribir en fichero
             String azStr;
             int iter = 0;
             azStr = Float.toString(a_z[0]);
-            while (iter < acc_data_line){
+            while (iter < acc_data_line) {
                 iter++;
                 azStr += "\n" + Float.toString(a_z[iter]);
             }
             // Crear fichero
             makeDataFile(azStr, 4);
         }
-        if (a_z_lin!= null){
+        if (a_z_lin != null) {
             // Creacion del String de a_z para escribir en fichero
-            String azStr="";
+            String azStr = "";
             int iter = 0;
             azStr = Float.toString(a_z_lin[0]);
-            while (iter < acc_data_line){
+            while (iter < acc_data_line) {
                 iter++;
                 azStr += "\n" + Float.toString(a_z_lin[iter]);
             }
@@ -193,7 +193,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                     filename = date + ".txt";
                     break;
             }
-        } else{
+        } else {
             switch (tipo) {
                 case 1:
                     filename = "acc_" + edit_name + ".txt";
@@ -337,7 +337,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 */
 
 
-
                 // In this example, alpha is calculated as t / (t + dT),
                 // where t is the low-pass filter's time-constant and
                 // dT is the event delivery rate.
@@ -346,7 +345,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 gravity[0] = alpha * gravity[0] + (1 - alpha) * event.values[0];
                 gravity[1] = alpha * gravity[1] + (1 - alpha) * event.values[1];
                 gravity[2] = alpha * gravity[2] + (1 - alpha) * event.values[2];
-
 
 
                 // Remove the gravity contribution with the high-pass filter.
@@ -359,8 +357,8 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
 
                 /*
-                * Calculo de la proyeccionm de la aceleracion sobre el eje de gravedad
-                * */
+                 * Calculo de la proyeccionm de la aceleracion sobre el eje de gravedad
+                 * */
                 // producto escalar: a·b = a1*b1 + a2*b2 + a3*b3
 
                 double gx, gy, gz;
@@ -368,18 +366,17 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 gy = (double) gravity[1];
                 gz = (double) gravity[2];
 
-                float mod_grav = (float) sqrt(pow(gx,2) + pow(gy,2) + pow(gz,2));
+                float mod_grav = (float) sqrt(pow(gx, 2) + pow(gy, 2) + pow(gz, 2));
 
-                a_z[acc_data_line] = (event.values[0]*gravity[0] + event.values[1]*gravity[1] +
-                        event.values[2]*gravity[2])/mod_grav;
+                a_z[acc_data_line] = (event.values[0] * gravity[0] + event.values[1] * gravity[1] +
+                        event.values[2] * gravity[2]) / mod_grav;
 
 
-
-                a_z_lin[acc_data_line] = (lin_acc_data[acc_data_line][0]*gravity[0] + lin_acc_data[acc_data_line][1]*gravity[1] +
-                        lin_acc_data[acc_data_line][2]*gravity[2])/mod_grav;
+                a_z_lin[acc_data_line] = (lin_acc_data[acc_data_line][0] * gravity[0] + lin_acc_data[acc_data_line][1] * gravity[1] +
+                        lin_acc_data[acc_data_line][2] * gravity[2]) / mod_grav;
 
                 Log.d(TAG, "GRAV: " + mod_grav);
-                Log.d(TAG, "LIN_ACC: " + "x:" +lin_acc_data[acc_data_line][0] + " Y:" + lin_acc_data[acc_data_line][1] + " Z:" + lin_acc_data[acc_data_line][2]);
+                Log.d(TAG, "LIN_ACC: " + "x:" + lin_acc_data[acc_data_line][0] + " Y:" + lin_acc_data[acc_data_line][1] + " Z:" + lin_acc_data[acc_data_line][2]);
                 Log.d(TAG, "AZ: " + a_z[acc_data_line]);
                 Log.d(TAG, "AZ_LIN: " + a_z_lin[acc_data_line]);
 
