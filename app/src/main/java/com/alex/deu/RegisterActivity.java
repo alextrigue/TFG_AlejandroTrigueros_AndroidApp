@@ -115,7 +115,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
             String azStr;
             int iter = 0;
             azStr = Float.toString(a_z[0]);
-            while (iter < acc_data_line) {
+            while (iter < acc_data_line-1) {
                 iter++;
                 azStr += "\n" + Float.toString(a_z[iter]);
             }
@@ -127,7 +127,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
             String azStr = "";
             int iter = 0;
             azStr = Float.toString(a_z_lin[0]);
-            while (iter < acc_data_line) {
+            while (iter < acc_data_line-1) {
                 iter++;
                 azStr += "\n" + Float.toString(a_z_lin[iter]);
             }
@@ -144,6 +144,9 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         }
         textData.setText(text);
 
+        Log.d(TAG, "StopRegister");
+        Toast toast = Toast.makeText(this, "Stop Register", Toast.LENGTH_SHORT);
+        toast.show();
     }
 
     public void makeDataFile(String data, int tipo) {
@@ -232,7 +235,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
             e.printStackTrace();
         }
 
-        Log.d(TAG, "stopRegister: Creating FILE... DONE" + directory + "/" + filename);
+        Log.d(TAG, "Creating FILE... DONE" + directory + "/" + filename);
     }
 
     public String sensorDataToString(float datos[][]) {
