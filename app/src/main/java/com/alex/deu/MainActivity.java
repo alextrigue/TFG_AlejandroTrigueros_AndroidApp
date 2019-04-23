@@ -31,4 +31,10 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
 
     }
+
+    public void startStatiticsActivity(View view) {
+        Log.d(LOG_TAG, "Statistics Activity started!!");
+        Intent intent = new Intent(this, StatisticsActivity.class);
+        startActivity(intent);
+    }
 }
