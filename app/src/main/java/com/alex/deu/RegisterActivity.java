@@ -22,7 +22,7 @@ import static java.lang.Math.sqrt;
 
 public class RegisterActivity extends AppCompatActivity implements SensorEventListener {
 
-    private static final String TAG = "RegisterActivity";
+    private static final String TAG = RegisterActivity.class.getSimpleName();
 
     private static final int m = 3000, n = 3;
     private static final int delay = 10000;
@@ -46,8 +46,12 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     private float[][] gyr_data = null;
     private int gyr_data_line = 0;
 
+    // Proyeccion de aceleracion sobre gravedad
     private float[] a_z = null;
     private float[] a_z_lin = null;
+
+    // Proyeccion de giroscopio sobre gravedad
+    private float[] g_z = null;
 
     public void startRegister(View view) {
         Toast toast = Toast.makeText(this, "START: Registrando actividad de sensores", Toast.LENGTH_SHORT);
@@ -66,6 +70,8 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         gravity = new float[3];
         a_z = new float[m];
         a_z_lin = new float[m];
+
+        g_z = new float[m];
 
         if (mGravity != null) {
             sensorManager.registerListener(this, mGravity, delay);
@@ -90,6 +96,10 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
     }
 
+
+    /**
+     * Desactiva los escuchadores de los sensores, deja de guardar susdatos y reinicia los vectores de datos
+     */
     public void stopRegister(View view) {
         sensorManager.unregisterListener(this, mAcce);
         sensorManager.unregisterListener(this, mGyro);
@@ -115,7 +125,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
             String azStr;
             int iter = 0;
             azStr = Float.toString(a_z[0]);
-            while (iter < acc_data_line-1) {
+            while (iter < acc_data_line - 1) {
                 iter++;
                 azStr += "\n" + Float.toString(a_z[iter]);
             }
@@ -124,15 +134,27 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         }
         if (a_z_lin != null) {
             // Creacion del String de a_z para escribir en fichero
-            String azStr = "";
+            String azLinStr;
             int iter = 0;
-            azStr = Float.toString(a_z_lin[0]);
-            while (iter < acc_data_line-1) {
+            azLinStr = Float.toString(a_z_lin[0]);
+            while (iter < acc_data_line - 1) {
                 iter++;
-                azStr += "\n" + Float.toString(a_z_lin[iter]);
+                azLinStr += "\n" + Float.toString(a_z_lin[iter]);
             }
             // Crear fichero
-            makeDataFile(azStr, 5);
+            makeDataFile(azLinStr, 5);
+        }
+        if (g_z != null) {
+            // Creacion del String g_z para escribir en fichero
+            String gzStr;
+            int iter = 0;
+            gzStr = Float.toString(g_z[0]);
+            while (iter < gyr_data_line - 1) {
+                iter++;
+                gzStr += "\n" + Float.toString(g_z[iter]);
+            }
+            // Creacion de fichero
+            makeDataFile(gzStr, 6);
         }
 
 
@@ -149,12 +171,16 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         toast.show();
     }
 
+    /**
+     * Recibe los datos en formato string y los guarda en un fichero
+     */
     public void makeDataFile(String data, int tipo) {
         // Tipo 1: acelerometro
         // Tipo 2: giroscopio
         // Tipo 3: acelerometro lineal
         // Tipo 4: proyecccion de aceleracion sobre vector gravedad a_z
         // Tipo 5: proyecccion de aceleracion lineal sobre vector gravedad a_z_lin
+        // TIpo 6: proyeccion de giroscopio sobre vector gravedad g_z
 
 
         Log.d(TAG, "stopRegister: Creating FILE");
@@ -175,6 +201,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
         String edit_name = editText.getText().toString();
 
+        // Eleccion del nombre del fichero segun su tipo
         if (edit_name.equals("")) {
             switch (tipo) {
                 case 1:
@@ -191,6 +218,9 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                     break;
                 case 5:
                     filename = "azlin_" + date + ".txt";
+                    break;
+                case 6:
+                    filename = "gz_" + date + ".txt";
                     break;
                 default:
                     filename = date + ".txt";
@@ -212,6 +242,9 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                     break;
                 case 5:
                     filename = "azlin_" + edit_name + ".txt";
+                    break;
+                case 6:
+                    filename = "gz_" + edit_name + ".txt";
                     break;
                 default:
                     filename = date + ".txt";
@@ -238,6 +271,10 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         Log.d(TAG, "Creating FILE... DONE" + directory + "/" + filename);
     }
 
+
+    /**
+     * Recibe los datos brutos de los sensores y les da formato de String para grabarlos en fichero posteriormente
+     */
     public String sensorDataToString(float datos[][]) {
         String stringData = "";
         int i;
@@ -264,6 +301,10 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         return stringData;
     }
 
+
+    /**
+     * Elimina el ultimo fichero creado
+     */
     public void deleteLastFile(View view) {
         Toast toast;
         //toast = Toast.makeText(this, "Borando...", Toast.LENGTH_SHORT);
@@ -314,10 +355,14 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         textData.setText(text);
     }
 
-
+    /**
+     * Se ejetuca al cambiar el valor de los sensores
+     * Almacena los datos de sensores en arrays
+     */
     @Override
     public void onSensorChanged(SensorEvent event) {
         Sensor sensor = event.sensor;
+        float mod_grav = 1;
 
         if (sensor.getType() == Sensor.TYPE_GRAVITY) {
             Log.d(TAG, "Gravity Changed: X:" + event.values[0] + " Y:" + event.values[1] + " Z:" + event.values[2]);
@@ -339,11 +384,11 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 Fuente: https://developer.android.com/guide/topics/sensors/sensors_motion#java
                 */
 
-
+                // Suavizado de la gravedad
                 // In this example, alpha is calculated as t / (t + dT),
                 // where t is the low-pass filter's time-constant and
                 // dT is the event delivery rate.
-                final float alpha = 0.2f;
+                final float alpha = 0.8f;
                 // Isolate the force of gravity with the low-pass filter.
                 gravity[0] = alpha * gravity[0] + (1 - alpha) * event.values[0];
                 gravity[1] = alpha * gravity[1] + (1 - alpha) * event.values[1];
@@ -360,7 +405,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
 
                 /*
-                 * Calculo de la proyeccionm de la aceleracion sobre el eje de gravedad
+                 * Calculo de la proyeccion de la aceleracion sobre el eje de gravedad
                  * */
                 // producto escalar: a·b = a1*b1 + a2*b2 + a3*b3
 
@@ -369,15 +414,22 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 gy = (double) gravity[1];
                 gz = (double) gravity[2];
 
-                float mod_grav = (float) sqrt(pow(gx, 2) + pow(gy, 2) + pow(gz, 2));
+                // Modulo del vector gravedad
+                mod_grav = (float) sqrt(pow(gx, 2) + pow(gy, 2) + pow(gz, 2));
 
-                a_z[acc_data_line] = (event.values[0] * gravity[0] + event.values[1] * gravity[1] +
-                        event.values[2] * gravity[2]) / mod_grav;
+                // Proyeccion de la aceleracion sobre gravedad
+                if (mod_grav > 0) {
+                    a_z[acc_data_line] = (event.values[0] * gravity[0] + event.values[1] * gravity[1] +
+                            event.values[2] * gravity[2]) / mod_grav;
 
-
-                a_z_lin[acc_data_line] = (lin_acc_data[acc_data_line][0] * gravity[0] + lin_acc_data[acc_data_line][1] * gravity[1] +
-                        lin_acc_data[acc_data_line][2] * gravity[2]) / mod_grav;
-
+                    // Proyeccion de la aceleracion lineal sobre gravedad
+                    a_z_lin[acc_data_line] = (lin_acc_data[acc_data_line][0] * gravity[0] + lin_acc_data[acc_data_line][1] * gravity[1] +
+                            lin_acc_data[acc_data_line][2] * gravity[2]) / mod_grav;
+                } else {
+                    // si por alguna razon el modulo de la gravedad es 0...
+                    a_z[acc_data_line] = 0;
+                    a_z_lin[acc_data_line] = 0;
+                }
                 Log.d(TAG, "GRAV: " + mod_grav);
                 Log.d(TAG, "LIN_ACC: " + "x:" + lin_acc_data[acc_data_line][0] + " Y:" + lin_acc_data[acc_data_line][1] + " Z:" + lin_acc_data[acc_data_line][2]);
                 Log.d(TAG, "AZ: " + a_z[acc_data_line]);
@@ -394,6 +446,15 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 gyr_data[gyr_data_line][0] = event.values[0];
                 gyr_data[gyr_data_line][1] = event.values[1];
                 gyr_data[gyr_data_line][2] = event.values[2];
+
+
+                if (mod_grav > 0) {
+                    g_z[gyr_data_line] = (event.values[0] * gravity[0] + event.values[1] * gravity[1] +
+                            event.values[2] * gravity[2]) / mod_grav;
+                } else {
+                    // Si por alguna razon el modulo de la gravedad es cero...
+                    g_z[gyr_data_line] = 0;
+                }
                 gyr_data_line++;
             }
         }
@@ -404,6 +465,10 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
     }
 
+
+    /**
+     * Al salir de la actividad desaciva los escuchadores
+     */
     @Override
     protected void onPause() {
         super.onPause();
