@@ -12,6 +12,7 @@ import android.util.Log;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import static java.lang.Math.pow;
 import static java.lang.StrictMath.sqrt;
@@ -22,19 +23,21 @@ public class StatisticsActivity extends AppCompatActivity implements SensorEvent
 
     private SensorManager sensorManager;
     private Sensor mAcce, mGyro, mGrav;
-    private static final int delay = SensorManager.SENSOR_DELAY_GAME;
+    private static final int delay = 20000;
     //20.000 microsegundos -> 50 muestras/segundo
     // Para 10000 microseconds -> 100 muestras/segundo
 
     private double intervalo = 2;// 2 segundos
-    private double muestras_seg = 1 / delay;
+    private double delay_seg = (double) delay/1000000;
+    private double muestras_seg = 1 / ((double) delay_seg);
     private int data_size = (int) (intervalo * muestras_seg);//Tamaño del array para calcular estadisticos
 
     private TextView tv_med, tv_std, tv;
 
     // guarda los valores x, y, z cada ez que cambia el sensor grav
     private float[] gravityValues = new float[3];
-    private ArrayList<Double> array_az = new ArrayList<Double>(data_size);
+    private double[] array_az = new double[data_size];
+    private int array_index = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,18 +122,29 @@ public class StatisticsActivity extends AppCompatActivity implements SensorEvent
                  * producto escalar: a·b = a1*b1 + a2*b2 + a3*b3
                  * */
 
-                double mod_grav = sqrt(pow(gravityValues[0], 2) + pow(gravityValues[1], 2) + pow(gravityValues[2], 2));
+                double mod_grav = sqrt(pow((double) gravityValues[0], 2) + pow((double) gravityValues[1], 2) + pow((double) gravityValues[2], 2));
 
                 if (mod_grav != 0) {
-                    array_az.add(
-                            (double) ((linear_acc[0] * gravityValues[0]) +
-                                    (linear_acc[1] * gravityValues[1]) +
-                                    (linear_acc[2] * gravityValues[2])) / mod_grav
-                    );
-                    Log.d(TAG, "Array AZ .add(): " + array_az.toString());
-                }else {
-                    array_az.add(0.0);
 
+                    array_az[array_index] = (double) ((linear_acc[0] * gravityValues[0]) +
+                            (linear_acc[1] * gravityValues[1]) +
+                            (linear_acc[2] * gravityValues[2])) / mod_grav;
+                    array_index++;
+                    //Log.d(TAG, "Array AZ .add(): " + Arrays.toString(array_az));
+                }else {
+                    array_az[array_index] = 0;
+
+                }
+                if (array_az[data_size-1] != 0){
+                    double sum=0;
+                    int i;
+                    for (i=0; i<data_size;i++) {
+                        sum = sum + array_az[i];
+                    }
+                    double media = sum/data_size;
+                    Log.d(TAG, "Media: " + media);
+                    array_az = new double[data_size];
+                    array_index = 0;
                 }
 
 
