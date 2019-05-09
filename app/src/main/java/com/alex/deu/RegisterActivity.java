@@ -53,6 +53,10 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     // Proyeccion de giroscopio sobre gravedad
     private float[] g_z = null;
 
+
+    /**
+     * Al pulsar boton START activa los escuchadores de los sensores
+     */
     public void startRegister(View view) {
         Toast toast = Toast.makeText(this, "START: Registrando actividad de sensores", Toast.LENGTH_SHORT);
         toast.show();
@@ -328,6 +332,10 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         textData.setText(text);
     }
 
+
+    /**
+     * Inicializa las variables glibales
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -467,7 +475,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
 
     /**
-     * Al salir de la actividad desaciva los escuchadores
+     * Al salir de la actividad desactiva los escuchadores
      */
     @Override
     protected void onPause() {

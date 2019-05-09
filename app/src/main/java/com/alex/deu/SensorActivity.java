@@ -11,16 +11,16 @@ import android.hardware.SensorManager;
 import android.util.Log;
 import android.widget.TextView;
 
-public class SensorActivity extends AppCompatActivity implements SensorEventListener{
+public class SensorActivity extends AppCompatActivity implements SensorEventListener {
 
-    private static final String TAG = "SensorActivity";
+    private static final String TAG = SensorActivity.class.getSimpleName();
 
     private SensorManager sensorManager;
     private Sensor mAcce, mGyro, mMagno, mLight, mStepCounter, mLinAcce, mGravity, rVector;
     private final int sensor_delay = 500000;//500.000 microseconds
     //private Sensor  mHumi, mTemp, mPressure;
 
-    TextView xValue, yValue, zValue,
+    private TextView xValue, yValue, zValue,
             xGyroValue, yGyroValue, zGyroValue,
             xMagnoValue, yMagnoValue, zMagnoValue,
             light,
@@ -68,8 +68,8 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         rVector = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
 
 
-
     }
+
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
@@ -79,7 +79,7 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
     public void onSensorChanged(SensorEvent sensorEvent) {
         Sensor sensor = sensorEvent.sensor;
 
-        if(sensor.getType() == Sensor.TYPE_GRAVITY){
+        if (sensor.getType() == Sensor.TYPE_GRAVITY) {
             Log.d(TAG, "GRAVITY: X:" + sensorEvent.values[0] + " Y:" + sensorEvent.values[1] + " Z:" + sensorEvent.values[2]);
         }
 
@@ -100,11 +100,11 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
             yGyroValue.setText("Y: " + sensorEvent.values[1]);
             zGyroValue.setText("Z: " + sensorEvent.values[2]);
 
-            if(sensorEvent.values[2] > 0.5f){
+            if (sensorEvent.values[2] > 0.5f) {
                 getWindow().getDecorView().setBackgroundColor(Color.RED);
-            }else if(sensorEvent.values[2] < -0.5f){
+            } else if (sensorEvent.values[2] < -0.5f) {
                 getWindow().getDecorView().setBackgroundColor(Color.YELLOW);
-            }else if(-0.5f < sensorEvent.values[2] && 0.5f > sensorEvent.values[2]){
+            } else if (-0.5f < sensorEvent.values[2] && 0.5f > sensorEvent.values[2]) {
                 getWindow().getDecorView().setBackgroundColor(Color.WHITE);
             }
 
@@ -117,71 +117,71 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         if (sensor.getType() == Sensor.TYPE_LIGHT) {
             light.setText("X: " + sensorEvent.values[0]);
         }
-        if (sensor.getType() == Sensor.TYPE_STEP_COUNTER){
+        if (sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
             step.setText("steps: " + sensorEvent.values[0]);
         }
     }
+
     @Override
     protected void onResume() {
         super.onResume();
 
-
-        if(rVector != null){
+        if (rVector != null) {
             sensorManager.registerListener(this, rVector, SensorManager.SENSOR_DELAY_NORMAL, SensorManager.SENSOR_STATUS_ACCURACY_LOW);
             Log.d(TAG, "onResume: Registrando Rotation Vector");
-        }else{
+        } else {
             Log.d(TAG, "onResume: Rotation Vector NO DISPONIBLE");
         }
 
-        if(mGravity != null){
+        if (mGravity != null) {
             sensorManager.registerListener(this, mGravity, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor de gravedad");
-        }else{
+        } else {
             Log.d(TAG, "onResume: Gravity sensor NO DISPONIBLE");
         }
 
-        if (mLinAcce!= null) {
+        if (mLinAcce != null) {
             sensorManager.registerListener(this, mLinAcce, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor acelerometro lineal");
-        }else{
+        } else {
             Log.d(TAG, "onResume: Linear Acceleration NO DISPONIBLE");
 
         }
 
-        if (mAcce!= null) {
+        if (mAcce != null) {
             sensorManager.registerListener(this, mAcce, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor acelerometro");
-        }else{
+        } else {
             xValue.setText("No disponible");
             yValue.setText("No disponible");
             zValue.setText("No disponible");
         }
-        if (mGyro!= null) {
+        if (mGyro != null) {
             sensorManager.registerListener(this, mGyro, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor giroscopio");
-        }else{
+        } else {
             xGyroValue.setText("No disponible");
             yGyroValue.setText("No disponible");
             zGyroValue.setText("No disponible");
         }
-        if (mMagno!= null) {
+        if (mMagno != null) {
             sensorManager.registerListener(this, mMagno, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor de campo magnetico");
-        }else{
+        } else {
             xMagnoValue.setText("No disponible");
             yMagnoValue.setText("No disponible");
             zMagnoValue.setText("No disponible");
         }
-        if (mLight!= null) {
+        if (mLight != null) {
             sensorManager.registerListener(this, mLight, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor de luminosidad");
-        }else{
+        } else {
             light.setText("No disponible");
         }
-        if (mStepCounter!= null) {
+        if (mStepCounter != null) {
             sensorManager.registerListener(this, mStepCounter, sensor_delay);
             Log.d(TAG, "onResume: Registrando el sensor podometro");
-        }else{
+        } else {
             step.setText("No disponible");
         }
 
