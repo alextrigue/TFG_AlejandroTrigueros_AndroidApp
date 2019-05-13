@@ -5,14 +5,12 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.location.LocationListener;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import static java.lang.Math.pow;
 import static java.lang.StrictMath.sqrt;
@@ -27,8 +25,8 @@ public class StatisticsActivity extends AppCompatActivity implements SensorEvent
     //20.000 microsegundos -> 50 muestras/segundo
     // Para 10000 microseconds -> 100 muestras/segundo
 
-    private double intervalo = 2;// 2 segundos
-    private double delay_seg = (double) delay/1000000;
+    private double intervalo = 4;// 2 segundos
+    private double delay_seg = (double) delay / 1000000;
     private double muestras_seg = 1 / ((double) delay_seg);
     private int data_size = (int) (intervalo * muestras_seg);//Tamaño del array para calcular estadisticos
 
@@ -37,8 +35,15 @@ public class StatisticsActivity extends AppCompatActivity implements SensorEvent
     // guarda los valores x, y, z cada ez que cambia el sensor grav
     private float[] gravityValues = new float[3];
     private double[] array_az = new double[data_size];
-    private int array_index = 0;
+    private int az_index = 0;
 
+    private double[] array_gz = new double[data_size];
+    private int gz_index = 0;
+
+
+    /**
+     * Inicializacion de sensores y elementos view
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,6 +59,9 @@ public class StatisticsActivity extends AppCompatActivity implements SensorEvent
         tv = findViewById(R.id.tv);
     }
 
+    /**
+     * Al iniciar activity regustrar escuchadores de sensores
+     */
     @Override
     protected void onResume() {
         super.onResume();
@@ -77,6 +85,9 @@ public class StatisticsActivity extends AppCompatActivity implements SensorEvent
         }
     }
 
+    /**
+     * Apagar escuchadores
+     */
     @Override
     protected void onPause() {
         super.onPause();
@@ -88,12 +99,11 @@ public class StatisticsActivity extends AppCompatActivity implements SensorEvent
     @Override
     public void onSensorChanged(SensorEvent event) {
         Sensor sensor = event.sensor;
-
+        double mod_grav = 0;
         switch (sensor.getType()) {
             case Sensor.TYPE_ACCELEROMETER:
                 /*ACCELEROMETER*/
                 //Log.d(TAG, "ACCE Changed: X:" + event.values[0] + " Y:" + event.values[1] + " Z:" + event.values[2] + " TS:" + event.timestamp);
-
                 /*
                  * CALCULO DE ACELERACION LINEAL
                  * Fuente: https://developer.android.com/guide/topics/sensors/sensors_motion#java
@@ -113,7 +123,6 @@ public class StatisticsActivity extends AppCompatActivity implements SensorEvent
                 linear_acc[0] = event.values[0] - gravityValues[0];
                 linear_acc[1] = event.values[1] - gravityValues[1];
                 linear_acc[2] = event.values[2] - gravityValues[2];
-
                 /*
                  * CALCULO DE LA PROYECCION DE LA ACELERACION SOBRE EL VECTOR DE GRAVEDAD
                  *
@@ -121,39 +130,72 @@ public class StatisticsActivity extends AppCompatActivity implements SensorEvent
                  *
                  * producto escalar: a·b = a1*b1 + a2*b2 + a3*b3
                  * */
-
-                double mod_grav = sqrt(pow((double) gravityValues[0], 2) + pow((double) gravityValues[1], 2) + pow((double) gravityValues[2], 2));
-
+                mod_grav = sqrt(pow((double) gravityValues[0], 2) + pow((double) gravityValues[1], 2) + pow((double) gravityValues[2], 2));
                 if (mod_grav != 0) {
-
-                    array_az[array_index] = (double) ((linear_acc[0] * gravityValues[0]) +
+                    /*
+                     * Si mod_grav distinito de cero podemos calcular la proyeccion en el vector gravedad
+                     * como vector unitario dividiendo por el modulo del vector gravedad
+                     * */
+                    array_az[az_index] = (double) ((linear_acc[0] * gravityValues[0]) +
                             (linear_acc[1] * gravityValues[1]) +
                             (linear_acc[2] * gravityValues[2])) / mod_grav;
-                    array_index++;
-                    //Log.d(TAG, "Array AZ .add(): " + Arrays.toString(array_az));
-                }else {
-                    array_az[array_index] = 0;
-
+                    az_index++;
+                } else {
+                    /*
+                     * Si mod_grav es 0 el valor de la proyección es 0
+                     * */
+                    array_az[az_index] = 0;
+                    az_index++;
                 }
-                if (array_az[data_size-1] != 0){
-                    double sum=0;
-                    int i;
-                    for (i=0; i<data_size;i++) {
-                        sum = sum + array_az[i];
-                    }
-                    double media = sum/data_size;
-                    Log.d(TAG, "Media: " + media);
+                /*
+                 * Si se llena el array se calculan los estadisticos y resetea el array
+                 * */
+                if (array_az[data_size - 1] != 0) {
+                    double med = media(array_az);
+                    Log.d(TAG, "Media ACC: " + med);
+                    double desv = desvTipica(array_az, med);
+                    Log.d(TAG, "Desviacion Tipica ACC: " + desv);
                     array_az = new double[data_size];
-                    array_index = 0;
+                    az_index = 0;
                 }
-
-
                 break;
+
             case Sensor.TYPE_GYROSCOPE:
                 /*GYROSCOPE*/
                 //Log.d(TAG, "GYRO Changed: X:" + event.values[0] + " Y:" + event.values[1] + " Z:" + event.values[2] + " TS:" + event.timestamp);
+                mod_grav = sqrt(pow((double) gravityValues[0], 2) + pow((double) gravityValues[1], 2) + pow((double) gravityValues[2], 2));
+                if (mod_grav != 0) {
+                    /*
+                     * Si mod_grav distinito de cero podemos calcular la proyeccion en el vector gravedad
+                     * como vector unitario dividiendo por el modulo del vector gravedad
+                     * */
+                    array_gz[gz_index] = (double) ((event.values[0] * gravityValues[0]) +
+                            (event.values[1] * gravityValues[1]) +
+                            (event.values[2] * gravityValues[2])) / mod_grav;
+                    gz_index++;
+                } else {
+                    /*
+                     * Si mod_grav es 0 el valor de la proyección es 0
+                     * */
+                    array_gz[gz_index] = 0;
+                    gz_index++;
+                }
+                /*
+                 * Si se llena el array se calculan los estadisticos y resetea el array
+                 * */
+                if (array_gz[data_size - 1] != 0) {
 
+                    double med = media(array_gz);
+                    Log.d(TAG, "Media GYRO: " + med);
+
+                    double desv = desvTipica(array_gz, med);
+                    Log.d(TAG, "Desviacion Tipica GYRO: " + desv);
+                    array_gz = new double[data_size];
+                    gz_index = 0;
+                }
                 break;
+
+
             case Sensor.TYPE_GRAVITY:
                 /*GRAVITY*/
                 gravityValues[0] = event.values[0];// X
@@ -166,8 +208,71 @@ public class StatisticsActivity extends AppCompatActivity implements SensorEvent
         }
     }
 
+    /**
+     * @return Calculo de la media de un array double
+     */
+    public double media(double[] data) {
+        int index = 0;
+        double sum = 0;
+        while (index < data.length) {
+            sum += data[index];
+            index++;
+        }
+        return sum / data.length;
+    }
+
+    /**
+     * @param data array double
+     * @param med  media de data
+     * @return desviacion tipica de array double
+     */
+    public double desvTipica(double[] data, double med) {
+        /*
+         * La varianza es la media de las desviaciones respecto a la media al cuadrado
+         * */
+        double varianza;
+        int n = data.length;
+        int i = 0;
+        double sum = 0;
+        if (med != 0) {
+            while (i < data.length) {
+                sum += pow(data[i] - med, 2);
+                i++;
+            }
+            varianza = sum / n;
+            // devuelve la raiz cuadrada de la varianza, es decir, la desviacion tipica
+            return sqrt(varianza);
+        } else {
+            // si la media no se pasa como parametro se calcula aqui
+            med = media(data);
+            while (i < data.length) {
+                sum += pow(data[i] - med, 2);
+                i++;
+            }
+            varianza = sum / n;
+            // devuelve la raiz cuadrada de la varianza, es decir, la desviacion tipica
+            return sqrt(varianza);
+        }
+    }
+
+    public double mediana(double[] data){
+
+        return 0;
+    }
+
+    //mediana
+
+    // coef de Pearson desvTipica/media
+
+    // coef de apertura max/min del conjunto de datos
+
+    //simetrias/asimetrias en distribucion estatistica
+
+
+    // covarianzas
+
+
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
     }
 }
