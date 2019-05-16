@@ -365,6 +365,12 @@ public class StatisticsActivity extends AppCompatActivity implements SensorEvent
         a_d = "a_des_"+date+".txt";
         g_d = "g_des_"+date+".txt";
 
+        String str = "[0,1,2]";
+        str = str.substring(1, str.length()-1);
+        Log.d(TAG, "SUBSTRING: " + str);
+
+        //TODO: quitar corchetes a los strings usando substring
+
         writeFile(a_m, a_medias.toString());
         writeFile(a_d, a_desv_tipicas.toString());
         writeFile(g_m, g_medias.toString());
