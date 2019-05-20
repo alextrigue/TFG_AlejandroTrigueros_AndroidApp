@@ -9,8 +9,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -26,7 +26,7 @@ public class StatisticsActivity extends AppCompatActivity implements SensorEvent
 
     private SensorManager sensorManager;
     private Sensor mAcce, mGyro, mGrav;
-    private static final int delay = 20000;
+    private static final int SENSOR_DELAY = 20000;
     //20.000 microsegundos -> 50 muestras/segundo
     // Para 10000 microseconds -> 100 muestras/segundo
 
@@ -69,19 +69,19 @@ public class StatisticsActivity extends AppCompatActivity implements SensorEvent
      */
     public void startStatistics(View view) {
         if (mAcce != null) {
-            sensorManager.registerListener(this, mAcce, delay);
+            sensorManager.registerListener(this, mAcce, SENSOR_DELAY);
             Log.d(TAG, "START: Registrando el sensor acelerometro");
         } else {
             tv.setText(tv.getText().toString() + "\nAcc no disponible");
         }
         if (mGrav != null) {
-            sensorManager.registerListener(this, mGrav, delay);
+            sensorManager.registerListener(this, mGrav, SENSOR_DELAY);
             Log.d(TAG, "START: Registrando el sensor gravedad");
         } else {
             tv.setText(tv.getText().toString() + "\nGrav no disponible");
         }
         if (mGyro != null) {
-            sensorManager.registerListener(this, mGyro, delay);
+            sensorManager.registerListener(this, mGyro, SENSOR_DELAY);
             Log.d(TAG, "START: Registrando el sensor giroscopio");
         } else {
             tv.setText(tv.getText().toString() + "\nGyro no disponible");
@@ -92,10 +92,10 @@ public class StatisticsActivity extends AppCompatActivity implements SensorEvent
     @Override
     protected void onResume() {
         super.onResume();
-        //delay = 20000;
+        //SENSOR_DELAY = 20000;
         //20.000 microsegundos -> 50 muestras/segundo
         double intervalo = 4;//segundos
-        double delay_seg = (double) delay / 1000000;//pasar de microsegundos a segundos
+        double delay_seg = (double) SENSOR_DELAY / 1000000;//pasar de microsegundos a segundos
         double muestras_seg = 1 / ((double) delay_seg);
         data_size = (int) (intervalo * muestras_seg);//Tamaño del array para calcular estadisticos
 
@@ -211,20 +211,25 @@ public class StatisticsActivity extends AppCompatActivity implements SensorEvent
                  * */
                 if (array_az[data_size - 1] != 0) {
                     double med = media(array_az);
-                    Log.d(TAG, "Media ACC: " + med);
+                    //Log.d(TAG, "Media ACC: " + med);
                     double desv = desvTipica(array_az, med);
-                    Log.d(TAG, "Desviacion Tipica ACC: " + desv);
+                    //Log.d(TAG, "Desviacion Tipica ACC: " + desv);
                     array_az = new double[data_size];
                     az_index = 0;
 
                     a_medias.add(med);
                     a_desv_tipicas.add(desv);
+                    Log.d(TAG, "A_MED ArrayList size: " + a_medias.size());
+                    Log.d(TAG, "A_DESV ArrayList size: " + a_desv_tipicas.size());
                 }
                 break;
 
             case Sensor.TYPE_GYROSCOPE:
                 /*GYROSCOPE*/
                 //Log.d(TAG, "GYRO Changed: X:" + event.values[0] + " Y:" + event.values[1] + " Z:" + event.values[2] + " TS:" + event.timestamp);
+
+                //TODO suavizado
+
                 mod_grav = sqrt(pow((double) gravityValues[0], 2) + pow((double) gravityValues[1], 2) + pow((double) gravityValues[2], 2));
                 if (mod_grav != 0) {
                     /*
@@ -248,15 +253,18 @@ public class StatisticsActivity extends AppCompatActivity implements SensorEvent
                 if (array_gz[data_size - 1] != 0) {
 
                     double med = media(array_gz);
-                    Log.d(TAG, "Media GYRO: " + med);
+                    //Log.d(TAG, "Media GYRO: " + med);
 
                     double desv = desvTipica(array_gz, med);
-                    Log.d(TAG, "Desviacion Tipica GYRO: " + desv);
+                    //Log.d(TAG, "Desviacion Tipica GYRO: " + desv);
                     array_gz = new double[data_size];
                     gz_index = 0;
 
                     g_medias.add(med);
                     g_desv_tipicas.add(desv);
+                    Log.d(TAG, "G_MED ArrayList size: " + g_medias.size());
+                    Log.d(TAG, "G_DESV ArrayList size: " + g_desv_tipicas.size());
+
 
                 }
                 break;
@@ -359,22 +367,30 @@ public class StatisticsActivity extends AppCompatActivity implements SensorEvent
         int month = 1 + c.get(Calendar.MONTH);
         int year = c.get(Calendar.YEAR);
         String date = year + "-" + month + "-" + day + "_" + hour + "-" + min + "-" + sec;
-        String a_m, a_d, g_m, g_d;
-        a_m = "a_med_"+date+".txt";
-        g_m = "g_med_"+date+".txt";
-        a_d = "a_des_"+date+".txt";
-        g_d = "g_des_"+date+".txt";
+        String am, ad, gm, gd;
+        am = "am_"+date+".txt";
+        gm = "gm_"+date+".txt";
+        ad = "ad_"+date+".txt";
+        gd = "gd_"+date+".txt";
 
+        /*
         String str = "[0,1,2]";
         str = str.substring(1, str.length()-1);
         Log.d(TAG, "SUBSTRING: " + str);
+        */
+        // Quitar los corchetes que introduce el metodo toString de ArrayList
+        // usando .subString()
+        String am_text, ad_text, gm_text, gd_text;
+        am_text = a_medias.toString().substring(1, a_medias.toString().length()-1);
+        ad_text = a_desv_tipicas.toString().substring(1, a_desv_tipicas.toString().length()-1);
+        gm_text = g_medias.toString().substring(1, g_medias.toString().length()-1);
+        gd_text = g_desv_tipicas.toString().substring(1, g_desv_tipicas.toString().length()-1);
 
-        //TODO: quitar corchetes a los strings usando substring
 
-        writeFile(a_m, a_medias.toString());
-        writeFile(a_d, a_desv_tipicas.toString());
-        writeFile(g_m, g_medias.toString());
-        writeFile(g_d, g_desv_tipicas.toString());
+        writeFile(am, am_text);
+        writeFile(ad, ad_text);
+        writeFile(gm, gm_text);
+        writeFile(gd, gd_text);
 
     }
 
@@ -395,6 +411,7 @@ public class StatisticsActivity extends AppCompatActivity implements SensorEvent
         }
 
         Log.d(TAG, "FILE created:\t" + directory + "/" + filename);
+        Toast.makeText(StatisticsActivity.this, "Files created", Toast.LENGTH_SHORT).show();
     }
 
 
