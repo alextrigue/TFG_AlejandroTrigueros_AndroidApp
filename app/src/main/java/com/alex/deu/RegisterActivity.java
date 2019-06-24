@@ -274,6 +274,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     @Override
     public void onSensorChanged(SensorEvent event) {
         float mod_grav = 1;
+        float[] prevR;
 
         switch (event.sensor.getType()) {
             case Sensor.TYPE_MAGNETIC_FIELD:
@@ -283,13 +284,25 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 //Log.d(TAG, "Magnetic timestamp: " + event.timestamp);
                 boolean check;
                 // ROTATION MATRIX
+                prevR = rotMatrix;
                 check = SensorManager.getRotationMatrix(rotMatrix, null, gravity, magnetic);
                 if (check) {
                     // Si se ha obtenido de forma correcta la matriz de rotacion
+                    /*
                     Log.d(TAG, "rotMatrix: \n" + rotMatrix[0] + ", " + rotMatrix[1] + ", " + rotMatrix[2] + "\n" +
                             rotMatrix[3] + ", " + rotMatrix[4] + ", " + rotMatrix[5] + "\n" +
                             rotMatrix[6] + ", " + rotMatrix[7] + ", " + rotMatrix[8]);
-                    rotMatrix_data.add(rotMatrix);
+                    */
+                    float[] angleChange = new float[3];
+                    //SensorManager.getAngleChange(angleChange, rotMatrix, prevR);
+                    //Log.d(TAG, "Angle Change: " + angleChange[0] + ", " + angleChange[1] + ", " + angleChange[2]);
+
+                    float[] orientation = new float[3];
+                    SensorManager.getOrientation(rotMatrix, orientation);
+                    //Log.d(TAG, "Orientation: " + orientation[0] + ", " + orientation[1] + ", " + orientation[2]);
+
+
+                    rotMatrix_data.add(orientation);
                     rotMatrix_ts.add(event.timestamp);
                 }
                 break;
@@ -550,7 +563,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
          *
          * @return string listo para imprimir en un fichero
          */
-        public String listToString(ArrayList<float[]> list) {
+        private String listToString(ArrayList<float[]> list) {
             String str = "";
             if (list != null) {
                 if (list.size() > 0) {
@@ -570,14 +583,14 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         /**
          * Recibe los datos en formato string y los guarda en un fichero
          */
-        public void makeDataFile(String data, int tipo) {
+        private void makeDataFile(String data, int tipo) {
             // Tipo 1: acelerometro
             // Tipo 2: giroscopio
             // Tipo 3: acelerometro lineal
             // Tipo 4: proyecccion de aceleracion lineal sobre vector gravedad (acc_proj_data)
-            // TIpo 5: proyeccion de giroscopio sobre vector gravedad (gyr_proj_data)
-            // TIpo 6: matriz de rotacion (rotMatrix_data)
-            // TODO: añadir tipo 7 para los timestamp de rotMatrix
+            // Tipo 5: proyeccion de giroscopio sobre vector gravedad (gyr_proj_data)
+            // Tipo 6: matriz de rotacion (rotMatrix_data)
+            // Tipo 7: timestamp de las matriz de rotacion
 
             String extension = ".txt";
 
