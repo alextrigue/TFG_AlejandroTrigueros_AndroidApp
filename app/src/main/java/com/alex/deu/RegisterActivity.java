@@ -293,7 +293,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                             rotMatrix[3] + ", " + rotMatrix[4] + ", " + rotMatrix[5] + "\n" +
                             rotMatrix[6] + ", " + rotMatrix[7] + ", " + rotMatrix[8]);
                     */
-                    float[] angleChange = new float[3];
+                    //float[] angleChange = new float[3];
                     //SensorManager.getAngleChange(angleChange, rotMatrix, prevR);
                     //Log.d(TAG, "Angle Change: " + angleChange[0] + ", " + angleChange[1] + ", " + angleChange[2]);
 

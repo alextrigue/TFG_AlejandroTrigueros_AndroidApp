@@ -15,5 +15,6 @@
     <string name="textView_gyrTittle">Gyroscope Data</string>
     <string name="button_delete">Borrar Ultimo</string>
     <string name="activity_statistics_name">Statistics Activity</string>
+    <string name="text_button_estadisticos">Estadisticos</string>
 
 </resources>
