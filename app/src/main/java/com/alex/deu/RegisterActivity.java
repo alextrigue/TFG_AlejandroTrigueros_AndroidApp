@@ -1,7 +1,16 @@
 package com.alex.deu;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.hardware.Sensor;
@@ -24,14 +33,15 @@ import static java.lang.Math.min;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 
-public class RegisterActivity extends AppCompatActivity implements SensorEventListener {
+public class RegisterActivity extends AppCompatActivity implements SensorEventListener, LocationListener {
 
     Context mContext;
+
 
     private static final String TAG = RegisterActivity.class.getSimpleName();
 
     private static final int m = 9000, n = 3;
-    private static final int delay = 10000;
+    private static final int delay = 20000;
     // Para 10000 microseconds con 6000 muestras (m) tenemos 1 minutos de datos (100 muestras por s)
     // Para DELAY_GAME con 3000 muestras (m), una cada 20,000 micro.s, tenemos 1 minutos de datos
     // Para DELAY_NORMAL con 300 muestras (m), una  cada 200,000 micro.s, tenemos 1 minutos de datos
@@ -39,7 +49,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
     private SensorManager sensorManager;
     private Sensor mAcce, mGyro, mGravity, mMag;
-    private TextView textData;
+    private TextView textData, textSpeed;
     private EditText editText;
 
 
@@ -70,6 +80,11 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     //Proyección del giroscopio sobre gravedad
     private ArrayList<float[]> gyr_proj_data;
 
+    // ORIENTATION
+    float[] orientation;
+    private ArrayList<float[]> orientation_data;//se almacenan todos los cambios de la matriz
+
+
     /**
      * Matriz de rotacion
      */
@@ -77,6 +92,12 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     private ArrayList<float[]> rotMatrix_data;//se almacenan todos los cambios de la matriz
     private ArrayList<Long> rotMatrix_ts;
 
+
+    private String provider;
+    private LocationManager locationManager;
+    private Location location;
+    private static final int REQUEST_LOCATION = 111;
+    private float speed;
 
     public Context getContext() {
         return this.mContext = this;
@@ -92,6 +113,14 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
         Log.d(TAG, "onCreate: Inicializando sensores");
 
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        boolean permission = checkPermission();
+
+
+        if (permission) {
+
+
+        }
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
@@ -101,7 +130,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         mMag = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
         textData = findViewById(R.id.textView_accData);
-
+        textSpeed = findViewById(R.id.textView_speed);
         editText = findViewById(R.id.editText_file_name);
 
 
@@ -129,6 +158,8 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         rotMatrix_data = new ArrayList<>();//float[]
         rotMatrix = new float[9];
         rotMatrix_ts = new ArrayList<>();//Long
+        orientation_data = new ArrayList<>();//float[]
+        orientation = new float[3];
 
 
         //Mostrar lista de ficheros guardados
@@ -196,17 +227,17 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
      * Desactiva los escuchadores de los sensores, deja de guardar susdatos y reinicia los vectores de datos
      */
     public void stopRegister(View view) {
+        sensorManager.unregisterListener(this, mMag);
+        sensorManager.unregisterListener(this, mGravity);
         sensorManager.unregisterListener(this, mAcce);
         sensorManager.unregisterListener(this, mGyro);
-        sensorManager.unregisterListener(this, mGravity);
-        sensorManager.unregisterListener(this, mMag);
+
         Log.d(TAG, "stopRegister: listeners unregistered");
-        //Log.d(TAG, "stopRegister: "+ dataToString(acc_data_array));
-        //textData.setText("Datos guardados");
 
-        textData.setText("\n\n\tGENERANDO ARCHIVOS...");
-        new CreateFiles().execute("Creando archivos...");
-
+        if (!orientation_data.isEmpty()) {
+            textData.setText("\n\n\tGENERANDO ARCHIVOS...");
+            new CreateFiles().execute("Creando archivos...");
+        }
     }
 
 
@@ -266,7 +297,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         textData.setText(text);
     }
 
-
     /**
      * Se ejetuca al cambiar el valor de los sensores
      * Almacena los datos de sensores en arrays
@@ -275,9 +305,11 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     public void onSensorChanged(SensorEvent event) {
         float mod_grav = 1;
         float[] prevR;
+        float ts;
 
         switch (event.sensor.getType()) {
             case Sensor.TYPE_MAGNETIC_FIELD:
+                ts = event.timestamp;
                 magnetic = event.values;
                 //magnetic_data.add(magnetic_data.size(), event.values);
                 //Log.d(TAG, "magnetic_data.size(): " + magnetic_data.size());
@@ -297,13 +329,18 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                     //SensorManager.getAngleChange(angleChange, rotMatrix, prevR);
                     //Log.d(TAG, "Angle Change: " + angleChange[0] + ", " + angleChange[1] + ", " + angleChange[2]);
 
-                    float[] orientation = new float[3];
                     SensorManager.getOrientation(rotMatrix, orientation);
                     //Log.d(TAG, "Orientation: " + orientation[0] + ", " + orientation[1] + ", " + orientation[2]);
 
+                    orientation_data.add(new float[]{
+                            orientation[0],
+                            orientation[1],
+                            orientation[2],
+                            ts
+                    });
 
-                    rotMatrix_data.add(orientation);
-                    rotMatrix_ts.add(event.timestamp);
+                    //rotMatrix_data.add(rotMatrix);
+                    //rotMatrix_ts.add(event.timestamp);
                 }
                 break;
 
@@ -317,6 +354,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 break;
 
             case Sensor.TYPE_ACCELEROMETER:
+                ts = event.timestamp;
                 //Log.d(TAG, "Acce Changed: X:" + event.values[0] + " Y:" + event.values[1] + " Z:" + event.values[2] + " TS:" + event.timestamp);
                 /*
                     acc_data_array[acc_data_line][0] = event.values[0];
@@ -328,7 +366,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                         event.values[0],
                         event.values[1],
                         event.values[2],
-                        event.timestamp
+                        ts
                 });
 
                 /*
@@ -358,13 +396,11 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 linear_acceleration[1] = event.values[1] - gravity[1];
                 linear_acceleration[2] = event.values[2] - gravity[2];
 
-
                 lin_data.add(new float[]{
                         linear_acceleration[0],
                         linear_acceleration[1],
                         linear_acceleration[2],
                 });
-
 
                 double gx, gy, gz;
                 gx = (double) gravity[0];
@@ -385,20 +421,21 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                                     (linear_acceleration[1] * gravity[1]) +
                                     (linear_acceleration[2] * gravity[2])) / mod_grav;
 
-                    acc_proj_data.add(new float[]{lin_accelerometer_projection, event.timestamp});
-                } else {
-                    //TODO:
-                    // si por alguna razon el modulo de la gravedad es 0...
+                    acc_proj_data.add(new float[]{
+                            lin_accelerometer_projection,
+                            ts
+                    });
 
+                } else {
+                    Log.d(TAG, "ATENCION: Modulo vector gravedad igual a 0");
                 }
                 //Log.d(TAG, "SENSORDATA GRAV: " + mod_grav);
                 //Log.d(TAG, "SENSORDATA LIN_ACC: " + "x:" + lin_acc_data[acc_data_line][0] + " Y:" + lin_acc_data[acc_data_line][1] + " Z:" + lin_acc_data[acc_data_line][2]);
-
                 break;
 
             case Sensor.TYPE_GYROSCOPE:
+                ts = event.timestamp;
                 //Log.d(TAG, "Gyro Changed: X:" + event.values[0] + " Y:" + event.values[1] + " Z:" + event.values[2]);
-
                 /*
                 gyr_data_array[gyr_data_line][0] = event.values[0];
                 gyr_data_array[gyr_data_line][1] = event.values[1];
@@ -408,34 +445,29 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                         event.values[0],
                         event.values[1],
                         event.values[2],
-                        event.timestamp
+                        ts
                 });
 
                 // Modulo del vector gravedad
-
                 gx = (double) gravity[0];
                 gy = (double) gravity[1];
                 gz = (double) gravity[2];
                 mod_grav = (float) sqrt(pow(gx, 2) + pow(gy, 2) + pow(gz, 2));
                 if (mod_grav > 0) {
-
                     // ArrayList para almacenar los valores de la proyeccion del gyr sobre gravity
                     float gyroscope_projection = ((event.values[0] * gravity[0]) +
                             (event.values[1] * gravity[1]) +
                             (event.values[2] * gravity[2])) / mod_grav;
-
-                    gyr_proj_data.add(gyr_proj_data.size(), new float[]{gyroscope_projection, event.timestamp});
+                    gyr_proj_data.add(gyr_proj_data.size(), new float[]{
+                            gyroscope_projection,
+                            ts
+                    });
 
                 } else {
-                    //TODO:
-                    // Si por alguna razon el modulo de la gravedad es cero...
+                    Log.d(TAG, "ATENCION: Modulo vector gravedad igual a 0");
                 }
-
-
                 break;
         }
-
-
     }
 
     @Override
@@ -450,32 +482,132 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     @Override
     protected void onPause() {
         super.onPause();
-        sensorManager.unregisterListener(this, mAcce);
-        sensorManager.unregisterListener(this, mGyro);
-        sensorManager.unregisterListener(this, mGravity);
-        sensorManager.unregisterListener(this, mMag);
+        //sensorManager.unregisterListener(this, mAcce);
+        //sensorManager.unregisterListener(this, mGyro);
+        //sensorManager.unregisterListener(this, mGravity);
+        //sensorManager.unregisterListener(this, mMag);
     }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        speed = location.getSpeed();
+        Log.d(TAG, "Location: " + location + "\nSpeed: " + speed);
+        textSpeed.setText("Speed: " + speed);
+        //Toast.makeText(getContext(),"Speed: " + speed, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onStatusChanged(String s, int i, Bundle bundle) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String s) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String s) {
+
+    }
+
+
+    /**
+     * Verifica si los permisos estan concedidos. Si no lo estan los solicita
+     * <p>
+     * <p>
+     * Fuente: https://stackoverflow.com/questions/40142331/how-to-request-location-permission-at-runtime
+     */
+    public boolean checkPermission() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+                //...Mostrar algun mensaje explicando porqué necesitamos permisos de localizacion
+                Log.d(TAG, "Explanation: se requiere acceso a la ubicacion.");
+            } else {
+                // Solicitar permisos de localización --> implementar onRequestPermissionsResult()
+                ActivityCompat.requestPermissions(this,
+                        new String[]{
+                                android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                                android.Manifest.permission.ACCESS_FINE_LOCATION,},
+                        REQUEST_LOCATION);
+            }
+            return false;
+        } else {
+            Log.d(TAG, "Permisos de localización disponibles, obteniendo localización...");
+            provider = locationManager.getBestProvider(new Criteria(), false);
+            //Solicitar localizacion
+            if (provider != null) {
+                locationManager.requestLocationUpdates(provider, 500, 0, this);
+                //minTime en milisegundos
+                // minDistance en metros
+                location = locationManager.getLastKnownLocation(provider);
+                return true;
+
+            } else {
+                Log.e(TAG, "Error obteniendo localizaión. Error de provider.");
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Este método se ejecuta al responder a la solicitud de permisos de localización
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == REQUEST_LOCATION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                System.out.println("Permisos de localización obtenidos, obteniendo localización...");
+                //Acciones necesarias si aplica
+
+                // permission was granted, yay! Do the
+                // location-related task you need to do.
+                if (ContextCompat.checkSelfPermission(this,
+                        Manifest.permission.ACCESS_FINE_LOCATION)
+                        == PackageManager.PERMISSION_GRANTED) {
+
+                    provider = locationManager.getBestProvider(new Criteria(), false);
+                    //Solicitar localizacion
+                    if (provider != null) {
+                        locationManager.requestLocationUpdates(provider, 500, 0, this);
+                        //minTime en milisegundos
+                        // minDistance en metros
+                        location = locationManager.getLastKnownLocation(provider);
+
+                    } else {
+                        Log.e(TAG, "Error obteniendo localizaión. Error de Provider.");
+                    }
+                }
+
+            } else {
+                Log.e(TAG, "No hay permisos para obtener localización.");
+                //Acciones necesarias si aplica
+            }
+        }
+    }
+
 
     /**
      * Clase Async Task
      */
     public class CreateFiles extends AsyncTask<String, Integer, Integer> {
-
         private static final String TAG = "CreateFiles";
 
         @Override
         protected Integer doInBackground(String... strings) {
-
             Log.d(TAG, strings[0]);
-
             String acc_str = "",
                     gyr_str = "",
                     lin_str = "",
                     acc_proj_str = "",
                     gyr_proj_str = "",
                     rotMat_str = "",
-                    rotMatTs_str = "";
-
+                    rotMatTs_str = "",
+                    orientation_str = "";
 
             if (acc_data != null) {
                 Log.d(TAG, "Creating FILE acc_data...");
@@ -493,7 +625,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
             if (lin_data != null) {
                 Log.d(TAG, "Creating FILE lin_data...");
                 lin_str = listToString(lin_data);
-                makeDataFile(lin_str, 3);
+                //makeDataFile(lin_str, 3);
                 //makeDataFile(lin_str, 3);
                 //lin_acc_data = null;
                 lin_data.clear();
@@ -513,14 +645,13 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
             if (gravity_data != null) {
                 gravity_data.clear();
             }
-
             if (magnetic_data != null) {
                 magnetic_data.clear();
             }
             if (rotMatrix_data != null) {
                 Log.d(TAG, "Creating FILE rotMatrix_data...");
                 rotMat_str = listToString(rotMatrix_data);
-                makeDataFile(rotMat_str, 6);
+                //makeDataFile(rotMat_str, 6);
                 //Log.d(TAG, "Matriz de rotacion:\n" + matrixString);
                 rotMatrix_data.clear();
             }
@@ -529,11 +660,15 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 for (int i = 0; i < rotMatrix_ts.size(); i++) {
                     rotMatTs_str += rotMatrix_ts.get(i) + "\n";
                 }
-                makeDataFile(rotMatTs_str, 7);
+                //makeDataFile(rotMatTs_str, 7);
                 rotMatrix_ts.clear();
             }
-
-
+            if (orientation_data != null) {
+                Log.d(TAG, "Creating FILE orientation_data...");
+                orientation_str = listToString(orientation_data);
+                makeDataFile(orientation_str, 8);
+                orientation_data.clear();
+            }
             return null;
         }
 
@@ -545,7 +680,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         @Override
         protected void onPostExecute(Integer integer) {
             super.onPostExecute(integer);
-
             //Mostrar lista de ficheros guardados
             String text = "";
             int i;
@@ -554,8 +688,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
             }
             editText.setText("");
             textData.setText(text);
-
-
         }
 
         /**
@@ -567,7 +699,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
             String str = "";
             if (list != null) {
                 if (list.size() > 0) {
-
                     for (int r = 0; r < list.size(); r++) {
                         for (int i = 0; i < list.get(r).length - 1; i++) {
                             str += list.get(r)[i] + ", ";
@@ -591,6 +722,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
             // Tipo 5: proyeccion de giroscopio sobre vector gravedad (gyr_proj_data)
             // Tipo 6: matriz de rotacion (rotMatrix_data)
             // Tipo 7: timestamp de las matriz de rotacion
+            // Tipo 8: orientacion
 
             String extension = ".txt";
 
@@ -639,17 +771,17 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 case 7:
                     filename = "rotMat_ts_" + name + extension;
                     break;
+                case 8:
+                    filename = "orientation_" + name + extension;
+                    break;
                 default:
                     filename = name + extension;
                     break;
             }
-
-
             //Crear fichero
             File directory = getContext().getFilesDir();
             File file = new File(directory, filename);
             FileOutputStream outputStream;
-
             //Escribir datos en el fichero
             try {
                 outputStream = openFileOutput(filename, Context.MODE_PRIVATE);
@@ -659,7 +791,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
             Log.d(TAG, "\n...DONE: " + directory + "/" + filename);
         }
     }
