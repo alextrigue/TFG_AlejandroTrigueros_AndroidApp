@@ -34,6 +34,12 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/textView_speed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/padding_regular" />
+
+            <TextView
                 android:id="@+id/textView_accData"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -65,7 +71,6 @@
         app:layout_constraintBottom_toBottomOf="parent">
 
 
-
         <Button
             android:id="@+id/button_start"
             android:layout_width="wrap_content"
@@ -75,8 +80,7 @@
             android:layout_marginBottom="8dp"
             android:background="@android:color/holo_green_light"
             android:onClick="startRegister"
-            android:text="@string/button_start"
-            />
+            android:text="@string/button_start" />
 
         <Button
             android:id="@+id/button_stop"
@@ -87,8 +91,7 @@
             android:layout_marginBottom="8dp"
             android:background="@android:color/holo_red_light"
             android:onClick="stopRegister"
-            android:text="@string/button_stop"
-           />
+            android:text="@string/button_stop" />
 
         <Button
             android:layout_width="wrap_content"
@@ -97,13 +100,10 @@
             android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="8dp"
-            android:background="@color/colorPrimaryDark"
             android:onClick="deleteLastFile"
-            android:text="@string/button_delete"
-            />
+            android:text="@string/button_delete" />
 
     </LinearLayout>
-
 
 
 </android.support.constraint.ConstraintLayout>

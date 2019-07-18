@@ -3,20 +3,19 @@ package com.alex.deu;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
-import android.support.annotation.NonNull;
+import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -28,8 +27,6 @@ import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-import static java.lang.Math.floor;
-import static java.lang.Math.min;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 
@@ -54,7 +51,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
 
     // GRAVITY
-    private ArrayList<float[]> gravity_data;//Almacenamiento de datos de Gravity
     private float[] gravity = null;//Almacena la ultima actualizacion del sensor de gravedad
 
     // MAGNETIC FIELD
@@ -111,19 +107,12 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
-        Log.d(TAG, "onCreate: Inicializando sensores");
-
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        boolean permission = checkPermission();
+        if (checkLocationPermission())
+            Log.d(TAG, "Permisos de localización disponibles.");
 
-
-        if (permission) {
-
-
-        }
-
+        Log.d(TAG, "onCreate: Inicializando sensores");
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-
         mAcce = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mGyro = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
         mGravity = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
@@ -132,7 +121,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         textData = findViewById(R.id.textView_accData);
         textSpeed = findViewById(R.id.textView_speed);
         editText = findViewById(R.id.editText_file_name);
-
 
         //SENSOR_DELAY_NORMAL 200.000 microseconds
         //SENSOR_DELAY_UI 60.000 microseconds
@@ -148,9 +136,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         lin_data = new ArrayList<>();//float[]
         gyr_data = new ArrayList<>();//float[]
 
-
         gravity = new float[3];
-        gravity_data = new ArrayList<>();//float[]
         magnetic = new float[3];
         magnetic_data = new ArrayList<>();//float[]
         acc_proj_data = new ArrayList<>();//float[]
@@ -161,7 +147,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         orientation_data = new ArrayList<>();//float[]
         orientation = new float[3];
 
-
         //Mostrar lista de ficheros guardados
         String text = "";
         int i;
@@ -169,7 +154,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
             text += fileList()[i] + "\n";
         }
         textData.setText(text);
-
     }
 
     /**
@@ -240,7 +224,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         }
     }
 
-
     /**
      * Recibe los datos brutos de los sensores en un array 2D
      * y les da formato de String para grabarlos en fichero posteriormente
@@ -303,11 +286,13 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
      */
     @Override
     public void onSensorChanged(SensorEvent event) {
-        float mod_grav = 1;
+        float mod_grav;
         float[] prevR;
         float ts;
 
         switch (event.sensor.getType()) {
+            default:
+                break;
             case Sensor.TYPE_MAGNETIC_FIELD:
                 ts = event.timestamp;
                 magnetic = event.values;
@@ -336,7 +321,8 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                             orientation[0],
                             orientation[1],
                             orientation[2],
-                            ts
+                            ts,
+                            speed
                     });
 
                     //rotMatrix_data.add(rotMatrix);
@@ -347,10 +333,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
             case Sensor.TYPE_GRAVITY:
                 //Log.d(TAG, "Gravity Changed: X:" + event.values[0] + " Y:" + event.values[1] + " Z:" + event.values[2]);
                 gravity = event.values;
-                //gravity_data.add(gravity_data.size(), event.values);
-
-                //Log.d(TAG, "gravity_data.size(): " + gravity_data.size());
-                //Log.d(TAG, "Gravity timestasmp: " + event.timestamp);
                 break;
 
             case Sensor.TYPE_ACCELEROMETER:
@@ -361,7 +343,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                     acc_data_array[acc_data_line][1] = event.values[1];
                     acc_data_array[acc_data_line][2] = event.values[2];
                     acc_data_array[acc_data_line][3] = event.timestamp;
-*/
+                */
                 acc_data.add(new float[]{
                         event.values[0],
                         event.values[1],
@@ -402,33 +384,31 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                         linear_acceleration[2],
                 });
 
-                double gx, gy, gz;
-                gx = (double) gravity[0];
-                gy = (double) gravity[1];
-                gz = (double) gravity[2];
                 // Modulo del vector gravedad
-                mod_grav = (float) sqrt(pow(gx, 2) + pow(gy, 2) + pow(gz, 2));
+                mod_grav = (float) sqrt(pow(gravity[0], 2) + pow(gravity[1], 2) + pow(gravity[2], 2));
                 // Proyeccion de la aceleracion sobre gravedad
-                if (mod_grav > 0) {
-                    /*
-                     * Calculo de la proyeccion de la aceleracion sobre el eje de gravedad
-                     * */
-                    // producto escalar: a·b = a1*b1 + a2*b2 + a3*b3
-                    // Proyeccion de la aceleracion lineal sobre gravedad
 
-                    float lin_accelerometer_projection = (
-                            (linear_acceleration[0] * gravity[0]) +
-                                    (linear_acceleration[1] * gravity[1]) +
-                                    (linear_acceleration[2] * gravity[2])) / mod_grav;
-
-                    acc_proj_data.add(new float[]{
-                            lin_accelerometer_projection,
-                            ts
-                    });
-
-                } else {
-                    Log.d(TAG, "ATENCION: Modulo vector gravedad igual a 0");
+                if (mod_grav == 0) {
+                    //Log.d(TAG, "ATENCION: Modulo vector gravedad igual a 0: forzando mod_grav = 9.8");
+                    mod_grav = 9.8f;
                 }
+                /*
+                 * Calculo de la proyeccion de la aceleracion sobre el eje de gravedad
+                 * */
+                // producto escalar: a·b = a1*b1 + a2*b2 + a3*b3
+                // Proyeccion de la aceleracion lineal sobre gravedad
+
+                float lin_accelerometer_projection = (
+                        (linear_acceleration[0] * gravity[0]) +
+                                (linear_acceleration[1] * gravity[1]) +
+                                (linear_acceleration[2] * gravity[2])) / mod_grav;
+
+                acc_proj_data.add(new float[]{
+                        lin_accelerometer_projection,
+                        ts
+                });
+
+
                 //Log.d(TAG, "SENSORDATA GRAV: " + mod_grav);
                 //Log.d(TAG, "SENSORDATA LIN_ACC: " + "x:" + lin_acc_data[acc_data_line][0] + " Y:" + lin_acc_data[acc_data_line][1] + " Z:" + lin_acc_data[acc_data_line][2]);
                 break;
@@ -449,23 +429,23 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 });
 
                 // Modulo del vector gravedad
-                gx = (double) gravity[0];
-                gy = (double) gravity[1];
-                gz = (double) gravity[2];
-                mod_grav = (float) sqrt(pow(gx, 2) + pow(gy, 2) + pow(gz, 2));
-                if (mod_grav > 0) {
-                    // ArrayList para almacenar los valores de la proyeccion del gyr sobre gravity
-                    float gyroscope_projection = ((event.values[0] * gravity[0]) +
-                            (event.values[1] * gravity[1]) +
-                            (event.values[2] * gravity[2])) / mod_grav;
-                    gyr_proj_data.add(gyr_proj_data.size(), new float[]{
-                            gyroscope_projection,
-                            ts
-                    });
+                mod_grav = (float) sqrt(pow(gravity[0], 2) + pow(gravity[1], 2) + pow(gravity[2], 2));
 
-                } else {
-                    Log.d(TAG, "ATENCION: Modulo vector gravedad igual a 0");
+                if (mod_grav == 0) {
+                    //Log.d(TAG, "ATENCION: Modulo vector gravedad igual a 0: forzando mod_grav = 9.8");
+                    mod_grav = 9.8f;
                 }
+
+                // ArrayList para almacenar los valores de la proyeccion del gyr sobre gravity
+                float gyroscope_projection = ((event.values[0] * gravity[0]) +
+                        (event.values[1] * gravity[1]) +
+                        (event.values[2] * gravity[2])) / mod_grav;
+                gyr_proj_data.add(gyr_proj_data.size(), new float[]{
+                        gyroscope_projection,
+                        ts
+                });
+
+
                 break;
         }
     }
@@ -490,8 +470,8 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
     @Override
     public void onLocationChanged(Location location) {
-        speed = location.getSpeed();
-        Log.d(TAG, "Location: " + location + "\nSpeed: " + speed);
+        speed = location.getSpeed() * 3600 / 1000; // Velocidad en kilometros por hora
+        //Log.d(TAG, "Location: " + location + "\nSpeed: " + speed);
         textSpeed.setText("Speed: " + speed);
         //Toast.makeText(getContext(),"Speed: " + speed, Toast.LENGTH_SHORT).show();
     }
@@ -518,7 +498,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
      * <p>
      * Fuente: https://stackoverflow.com/questions/40142331/how-to-request-location-permission-at-runtime
      */
-    public boolean checkPermission() {
+    public boolean checkLocationPermission() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
@@ -541,7 +521,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
             provider = locationManager.getBestProvider(new Criteria(), false);
             //Solicitar localizacion
             if (provider != null) {
-                locationManager.requestLocationUpdates(provider, 500, 0, this);
+                locationManager.requestLocationUpdates(provider, 200, 0, this);
                 //minTime en milisegundos
                 // minDistance en metros
                 location = locationManager.getLastKnownLocation(provider);
@@ -573,7 +553,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                     provider = locationManager.getBestProvider(new Criteria(), false);
                     //Solicitar localizacion
                     if (provider != null) {
-                        locationManager.requestLocationUpdates(provider, 500, 0, this);
+                        locationManager.requestLocationUpdates(provider, 200, 0, this);
                         //minTime en milisegundos
                         // minDistance en metros
                         location = locationManager.getLastKnownLocation(provider);
@@ -600,14 +580,14 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         @Override
         protected Integer doInBackground(String... strings) {
             Log.d(TAG, strings[0]);
-            String acc_str = "",
-                    gyr_str = "",
-                    lin_str = "",
-                    acc_proj_str = "",
-                    gyr_proj_str = "",
-                    rotMat_str = "",
-                    rotMatTs_str = "",
-                    orientation_str = "";
+            String acc_str,
+                    gyr_str,
+                    lin_str,
+                    acc_proj_str ,
+                    gyr_proj_str,
+                    rotMat_str,
+                    rotMatTs_str="",
+                    orientation_str ;
 
             if (acc_data != null) {
                 Log.d(TAG, "Creating FILE acc_data...");
@@ -642,9 +622,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 makeDataFile(gyr_proj_str, 5);
                 gyr_proj_data.clear();
             }
-            if (gravity_data != null) {
-                gravity_data.clear();
-            }
+
             if (magnetic_data != null) {
                 magnetic_data.clear();
             }

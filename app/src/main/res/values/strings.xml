@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">DEU</string>
+    <string name="app_name">Detección de Elementos Urbanos</string>
     <string name="activity_sensor_name">Sensor Activity</string>
     <string name="activity_register_name">Register Activity</string>
     <string name="button_start">START</string>
@@ -16,5 +16,7 @@
     <string name="button_delete">Borrar Ultimo</string>
     <string name="activity_statistics_name">Statistics Activity</string>
     <string name="text_button_estadisticos">Estadisticos</string>
+    <string name="activity_turn_name">Turn Activity</string>
+    <string name="button_turn">Turn</string>
 
 </resources>

@@ -15,26 +15,29 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
     }
 
     public void startSensorActivity(View view) {
         Log.d(LOG_TAG, "Sensor Activity started!!");
         Intent intent = new Intent(this, SensorActivity.class);
         startActivity(intent);
-
     }
 
     public void startRegisterActivity(View view) {
         Log.d(LOG_TAG, "Register Activity started!!");
         Intent intent = new Intent(this, RegisterActivity.class);
         startActivity(intent);
-
     }
 
     public void startStatiticsActivity(View view) {
         Log.d(LOG_TAG, "Statistics Activity started!!");
         Intent intent = new Intent(this, StatisticsActivity.class);
+        startActivity(intent);
+    }
+
+    public void startTurnActivity(View view) {
+        Log.d(LOG_TAG, "Statistics Activity started!!");
+        Intent intent = new Intent(this, TurnActivity.class);
         startActivity(intent);
     }
 }

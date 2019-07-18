@@ -8,11 +8,11 @@
 
     <Button
         android:id="@+id/button_sensors"
-        android:layout_width="wrap_content"
-        android:layout_height="100dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
         android:onClick="startSensorActivity"
         android:text="@string/button_sensors"
         android:textSize="20sp"
@@ -21,12 +21,26 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
+        android:id="@+id/button_register"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:onClick="startRegisterActivity"
+        android:text="@string/button_register"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button_sensors" />
+
+    <Button
         android:id="@+id/button_estadisticos"
-        android:layout_width="wrap_content"
-        android:layout_height="100dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
         android:onClick="startStatiticsActivity"
         android:text="@string/text_button_estadisticos"
         android:textSize="20sp"
@@ -35,17 +49,17 @@
         app:layout_constraintTop_toBottomOf="@+id/button_register" />
 
     <Button
-        android:id="@+id/button_register"
-        android:layout_width="wrap_content"
-        android:layout_height="100dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:onClick="startRegisterActivity"
-        android:text="@string/button_register"
+        android:id="@+id/button_turn"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:onClick="startTurnActivity"
+        android:text="@string/button_turn"
         android:textSize="20sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button_sensors" />
+        app:layout_constraintTop_toBottomOf="@+id/button_estadisticos" />
 
 </android.support.constraint.ConstraintLayout>
