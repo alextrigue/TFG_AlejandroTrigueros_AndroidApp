@@ -13,7 +13,7 @@
     <string name="button_register">Registrar Actividad</string>
     <string name="textView_accTittle">Archivos guardados</string>
     <string name="textView_gyrTittle">Gyroscope Data</string>
-    <string name="button_delete">Borrar Ultimo</string>
+    <string name="button_delete">Borrar Último</string>
     <string name="activity_statistics_name">Statistics Activity</string>
     <string name="text_button_estadisticos">Estadisticos</string>
     <string name="activity_turn_name">Turn Activity</string>

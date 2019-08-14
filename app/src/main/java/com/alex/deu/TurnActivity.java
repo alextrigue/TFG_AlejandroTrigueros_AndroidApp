@@ -21,11 +21,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 
 
+import static java.lang.Math.abs;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 
@@ -38,6 +40,7 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
     // Elementos UI
     private Button start_button, stop_button;
     private TextView velocity_tv, anglechange_tv, radio_tv;
+    private ImageView turning;
 
     // Sensores
     private static final int SENSOR_DELAY = 20000; //microsegundos
@@ -71,6 +74,7 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
         velocity_tv = findViewById(R.id.velocity_value);
         anglechange_tv = findViewById(R.id.anglechange_value);
         radio_tv = findViewById(R.id.radio_value);
+        turning = findViewById(R.id.turning);
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -377,18 +381,17 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
 
             long tic = System.nanoTime();
 
-            double[] az = objectToDoubletArray(sensorData[0]);
-            double[] gz = objectToDoubletArray(sensorData[1]);
+            //double[] az = objectToDoubletArray(sensorData[0]);
+            //double[] gz = objectToDoubletArray(sensorData[1]);
             double[] azi = objectToDoubletArray(sensorData[2]);
             double[] vel = objectToDoubletArray(sensorData[3]);
             Object[] ts = sensorData[4];
-            double t = (double)((long)ts[ts.length-1] - (long)ts[0]);
+            double t = (double) ((long) ts[ts.length - 1] - (long) ts[0]);
 
             double[] azi_rect = rectAzimuth(azi);
-            angle_change = (azi_rect[azi_rect.length - 1] - azi_rect[0]) * 180 / Math.PI;
+            angle_change = (azi_rect[azi_rect.length - 1] - azi_rect[0]);
             vel_med = media(vel);
-            radio_giro = radioGiro(angle_change,vel_med,t);
-
+            radio_giro = radioGiro(angle_change, vel_med, t);
 
 
             long toc = (System.nanoTime() - tic);
@@ -439,19 +442,22 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
 
         private double radioGiro(double angle_change, double speed, double time) {
             double r;
-            double umbral_angulo = 12;
-            time = time/1000000000; // de nanosegundos a segundos
+            double umbral_angulo = Math.PI*(0.06);//11 grados = 0.061111 PI radianes
+            angle_change = abs(angle_change);
+            time = time / 1000000000; // de nanosegundos a segundos
+            Log.d(TAG,"TIME: " + time);
             // Si el cambio de angulo es de 12 grados o mas, caluculamos el raid ode giro
             // Sirve para evitar el calculo de radios de giro demasiado grandes
             // que pueden interpretarse como ruido al andar en linea recta
-            if (angle_change > umbral_angulo){
+            if (angle_change > umbral_angulo) {
                 // velocidad en m/s
                 // tiempo en segundos
                 // angulo de giro en radianes
                 // longitudes en metros
+
                 double longitud = speed * time;// metros
                 r = longitud / angle_change;
-            }else{
+            } else {
                 r = 0;
             }
             return r;
@@ -463,7 +469,17 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
 
             velocity_tv.setText("" + vel_med);
             anglechange_tv.setText("" + angle_change);
-            radio_tv.setText(""+radio_giro);
+            radio_tv.setText("" + radio_giro);
+            if (radio_giro > 0) {
+                if (angle_change < 0) {
+                    turning.setImageResource(R.drawable.ic_arrow_back_black);
+                } else if (angle_change > 0) {
+                    turning.setImageResource(R.drawable.ic_arrow_forward_black);
+                }
+            } else {
+                turning.setImageResource(R.drawable.ic_arrow_upward_black);
+            }
+
             Log.d(TAG, "\nVelocidad: " + vel_med + "\nAngleChange/sec: " + angle_change + "\nRadio giro: " + radio_giro);
         }
     }

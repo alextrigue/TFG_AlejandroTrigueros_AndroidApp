@@ -18,6 +18,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,6 +49,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     private Sensor mAcce, mGyro, mGravity, mMag;
     private TextView textData, textSpeed;
     private EditText editText;
+    private Button start,stop;
 
 
     // GRAVITY
@@ -121,7 +123,9 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         textData = findViewById(R.id.textView_accData);
         textSpeed = findViewById(R.id.textView_speed);
         editText = findViewById(R.id.editText_file_name);
-
+        start = findViewById(R.id.button_start);
+        stop = findViewById(R.id.button_stop);
+        stop.setEnabled(false);
         //SENSOR_DELAY_NORMAL 200.000 microseconds
         //SENSOR_DELAY_UI 60.000 microseconds
         //SENSOR_DELAY_GAME 20.000 microseconds
@@ -156,14 +160,25 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         textData.setText(text);
     }
 
+    @Override
+    protected void onDestroy() {
+        sensorManager.unregisterListener(this, mMag);
+        sensorManager.unregisterListener(this, mGravity);
+        sensorManager.unregisterListener(this, mAcce);
+        sensorManager.unregisterListener(this, mGyro);
+        super.onDestroy();
+    }
+
     /**
      * Al pulsar boton START activa los escuchadores de los sensores
      */
     public void startRegister(View view) {
         Toast toast = Toast.makeText(this, "START: Registrando actividad de sensores", Toast.LENGTH_SHORT);
         toast.show();
+        start.setEnabled(false);
+        stop.setEnabled(true);
 
-        textData.setText("\n\tREGISTRANDO DATOS...");
+        textData.setText("\nREGISTRANDO DATOS...");
 
         if (mAcce != null) {
             //acc_data_line = 0;
@@ -202,8 +217,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         } else {
             Log.d(TAG, "startRegister: Sensor GRAVITY NO DISPONIBLE");
         }
-
-
     }
 
 
@@ -217,9 +230,11 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         sensorManager.unregisterListener(this, mGyro);
 
         Log.d(TAG, "stopRegister: listeners unregistered");
+        start.setEnabled(true);
+        stop.setEnabled(false);
 
         if (!orientation_data.isEmpty()) {
-            textData.setText("\n\n\tGENERANDO ARCHIVOS...");
+            textData.setText("\nGENERANDO ARCHIVOS...");
             new CreateFiles().execute("Creando archivos...");
         }
     }
