@@ -11,21 +11,23 @@ import android.hardware.SensorManager;
 import android.util.Log;
 import android.widget.TextView;
 
+import java.text.DecimalFormat;
+
+import static com.alex.deu.R.string.sensor_no_disp;
+
 public class SensorActivity extends AppCompatActivity implements SensorEventListener {
 
     private static final String TAG = SensorActivity.class.getSimpleName();
 
     private SensorManager sensorManager;
     private Sensor mAcce, mGyro, mMagno, mLight, mStepCounter, mLinAcce, mGravity, rVector;
-    private final int sensor_delay = 500000;//500.000 microseconds
-    //private Sensor  mHumi, mTemp, mPressure;
+    private Sensor mHumi, mTemp, mPressure, mProx;
 
-    private TextView xValue, yValue, zValue,
+    private TextView xAccValue, yAccValue, zAccValue,
             xGyroValue, yGyroValue, zGyroValue,
-            xMagnoValue, yMagnoValue, zMagnoValue,
-            light,
-            step;
-    //TextView humi, temp, pressure;
+            xMagValue, yMagValue, zMagValue,
+            xGravValue, yGravValue, zGravValue,
+            light, step, humi, temp, press, prox;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,21 +36,29 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
 
         Log.d(TAG, "onCreate: Inicializando sensores");
 
-        xValue = findViewById(R.id.xValue);
-        yValue = findViewById(R.id.yValue);
-        zValue = findViewById(R.id.zValue);
+        xAccValue = findViewById(R.id.xAccValue);
+        yAccValue = findViewById(R.id.yAccValue);
+        zAccValue = findViewById(R.id.zAccValue);
 
         xGyroValue = findViewById(R.id.xGyroValue);
         yGyroValue = findViewById(R.id.yGyroValue);
         zGyroValue = findViewById(R.id.zGyroValue);
 
-        xMagnoValue = findViewById(R.id.xMagnoValue);
-        yMagnoValue = findViewById(R.id.yMagnoValue);
-        zMagnoValue = findViewById(R.id.zMagnoValue);
+        xMagValue = findViewById(R.id.xMagValue);
+        yMagValue = findViewById(R.id.yMagValue);
+        zMagValue = findViewById(R.id.zMagValue);
+
+        xGravValue = findViewById(R.id.xGravValue);
+        yGravValue = findViewById(R.id.yGravValue);
+        zGravValue = findViewById(R.id.zGravValue);
 
         light = findViewById(R.id.light);
 
-        step = findViewById(R.id.step);
+        step = findViewById(R.id.steps);
+        humi = findViewById(R.id.humi);
+        temp = findViewById(R.id.temp);
+        press = findViewById(R.id.press);
+        prox = findViewById(R.id.prox);
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
@@ -58,13 +68,12 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         mLight = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         mStepCounter = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         mLinAcce = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
-        //mHumi = sensorManager.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
-        //mTemp = sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
-        //mPressure = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
-
+        mHumi = sensorManager.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
+        mTemp = sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
+        mPressure = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
+        mProx = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
         /* GRAVITY SENSOR */
         mGravity = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
-
         rVector = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
 
 
@@ -78,27 +87,39 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         Sensor sensor = sensorEvent.sensor;
+        String str;
+        DecimalFormat formato4 = new DecimalFormat("0.0000");//4 decimales
 
         if (sensor.getType() == Sensor.TYPE_GRAVITY) {
             Log.d(TAG, "GRAVITY: X:" + sensorEvent.values[0] + " Y:" + sensorEvent.values[1] + " Z:" + sensorEvent.values[2]);
+            str = "X: " + formato4.format(sensorEvent.values[0]);
+            xGravValue.setText(str);
+            str = "Y: " + formato4.format(sensorEvent.values[1]);
+            yGravValue.setText(str);
+            str = "Z: " + formato4.format(sensorEvent.values[2]);
+            zGravValue.setText(str);
         }
-
         if (sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
             Log.d(TAG, "VECTOR: X:" + sensorEvent.values[0] + " Y:" + sensorEvent.values[1] + " Z:" + sensorEvent.values[2]);
         }
-
-
         if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             Log.d(TAG, "ACCELEROMETER: X:" + sensorEvent.values[0] + " Y:" + sensorEvent.values[1] + " Z:" + sensorEvent.values[2]);
-            xValue.setText("X: " + sensorEvent.values[0]);
-            yValue.setText("Y: " + sensorEvent.values[1]);
-            zValue.setText("Z: " + sensorEvent.values[2]);
+            str = "X: " + formato4.format(sensorEvent.values[0]);
+            xAccValue.setText(str);
+            str = "Y: " + formato4.format(sensorEvent.values[1]);
+            yAccValue.setText(str);
+            str = "Z: " + formato4.format(sensorEvent.values[2]);
+            zAccValue.setText(str);
         }
         if (sensor.getType() == Sensor.TYPE_GYROSCOPE) {
             Log.d(TAG, "GYROSCOPE: X:" + sensorEvent.values[0] + " Y:" + sensorEvent.values[1] + " Z:" + sensorEvent.values[2]);
-            xGyroValue.setText("X: " + sensorEvent.values[0]);
-            yGyroValue.setText("Y: " + sensorEvent.values[1]);
-            zGyroValue.setText("Z: " + sensorEvent.values[2]);
+
+            str = "X: " + formato4.format(sensorEvent.values[0]);
+            xGyroValue.setText(str);
+            str = "Y: " + formato4.format(sensorEvent.values[1]);
+            yGyroValue.setText(str);
+            str = "Z: " + formato4.format(sensorEvent.values[2]);
+            zGyroValue.setText(str);
 
             if (sensorEvent.values[2] > 0.5f) {
                 getWindow().getDecorView().setBackgroundColor(Color.RED);
@@ -107,18 +128,38 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
             } else if (-0.5f < sensorEvent.values[2] && 0.5f > sensorEvent.values[2]) {
                 getWindow().getDecorView().setBackgroundColor(Color.WHITE);
             }
-
         }
         if (sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-            xMagnoValue.setText("X: " + sensorEvent.values[0]);
-            yMagnoValue.setText("Y: " + sensorEvent.values[1]);
-            zMagnoValue.setText("Z: " + sensorEvent.values[2]);
+            str = "X: " + formato4.format(sensorEvent.values[0]);
+            xMagValue.setText(str);
+            str = "Y: " + formato4.format(sensorEvent.values[1]);
+            yMagValue.setText(str);
+            str = "Z: " + formato4.format(sensorEvent.values[2]);
+            zMagValue.setText(str);
         }
         if (sensor.getType() == Sensor.TYPE_LIGHT) {
-            light.setText("X: " + sensorEvent.values[0]);
+            str = "X: " + sensorEvent.values[0];
+            light.setText(str);
         }
         if (sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
-            step.setText("steps: " + sensorEvent.values[0]);
+            str = "" + new DecimalFormat("0").format(sensorEvent.values[0]);
+            step.setText(str);
+        }
+        if (sensor.getType() == Sensor.TYPE_RELATIVE_HUMIDITY) {
+            str = "" + sensorEvent.values[0];
+            humi.setText(str);
+        }
+        if (sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE) {
+            str = "" + sensorEvent.values[0];
+            temp.setText(str);
+        }
+        if (sensor.getType() == Sensor.TYPE_PRESSURE) {
+            str = "" + formato4.format(sensorEvent.values[0]);
+            press.setText(str);
+        }
+        if (sensor.getType() == Sensor.TYPE_PROXIMITY) {
+            str = "" + sensorEvent.values[0];
+            prox.setText(str);
         }
     }
 
@@ -127,21 +168,21 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         super.onResume();
 
         if (rVector != null) {
-            sensorManager.registerListener(this, rVector, SensorManager.SENSOR_DELAY_NORMAL, SensorManager.SENSOR_STATUS_ACCURACY_LOW);
+            sensorManager.registerListener(this, rVector, SensorManager.SENSOR_DELAY_NORMAL);
             Log.d(TAG, "onResume: Registrando Rotation Vector");
         } else {
             Log.d(TAG, "onResume: Rotation Vector NO DISPONIBLE");
         }
 
         if (mGravity != null) {
-            sensorManager.registerListener(this, mGravity, sensor_delay);
+            sensorManager.registerListener(this, mGravity, SensorManager.SENSOR_DELAY_NORMAL);
             Log.d(TAG, "onResume: Registrando el sensor de gravedad");
         } else {
             Log.d(TAG, "onResume: Gravity sensor NO DISPONIBLE");
         }
 
         if (mLinAcce != null) {
-            sensorManager.registerListener(this, mLinAcce, sensor_delay);
+            sensorManager.registerListener(this, mLinAcce, SensorManager.SENSOR_DELAY_NORMAL);
             Log.d(TAG, "onResume: Registrando el sensor acelerometro lineal");
         } else {
             Log.d(TAG, "onResume: Linear Acceleration NO DISPONIBLE");
@@ -149,54 +190,66 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         }
 
         if (mAcce != null) {
-            sensorManager.registerListener(this, mAcce, sensor_delay);
+            sensorManager.registerListener(this, mAcce, SensorManager.SENSOR_DELAY_NORMAL);
             Log.d(TAG, "onResume: Registrando el sensor acelerometro");
         } else {
-            xValue.setText("No disponible");
-            yValue.setText("No disponible");
-            zValue.setText("No disponible");
+            xAccValue.setText(sensor_no_disp);
+            yAccValue.setText(sensor_no_disp);
+            zAccValue.setText(sensor_no_disp);
         }
         if (mGyro != null) {
-            sensorManager.registerListener(this, mGyro, sensor_delay);
+            sensorManager.registerListener(this, mGyro, SensorManager.SENSOR_DELAY_NORMAL);
             Log.d(TAG, "onResume: Registrando el sensor giroscopio");
         } else {
-            xGyroValue.setText("No disponible");
-            yGyroValue.setText("No disponible");
-            zGyroValue.setText("No disponible");
+            xGyroValue.setText(sensor_no_disp);
+            yGyroValue.setText(sensor_no_disp);
+            zGyroValue.setText(sensor_no_disp);
         }
         if (mMagno != null) {
-            sensorManager.registerListener(this, mMagno, sensor_delay);
+            sensorManager.registerListener(this, mMagno, SensorManager.SENSOR_DELAY_NORMAL);
             Log.d(TAG, "onResume: Registrando el sensor de campo magnetico");
         } else {
-            xMagnoValue.setText("No disponible");
-            yMagnoValue.setText("No disponible");
-            zMagnoValue.setText("No disponible");
+            xMagValue.setText(sensor_no_disp);
+            yMagValue.setText(sensor_no_disp);
+            zMagValue.setText(sensor_no_disp);
         }
         if (mLight != null) {
-            sensorManager.registerListener(this, mLight, sensor_delay);
+            sensorManager.registerListener(this, mLight, SensorManager.SENSOR_DELAY_NORMAL);
             Log.d(TAG, "onResume: Registrando el sensor de luminosidad");
         } else {
-            light.setText("No disponible");
+            light.setText(sensor_no_disp);
         }
         if (mStepCounter != null) {
-            sensorManager.registerListener(this, mStepCounter, sensor_delay);
+            sensorManager.registerListener(this, mStepCounter, SensorManager.SENSOR_DELAY_NORMAL);
             Log.d(TAG, "onResume: Registrando el sensor podometro");
         } else {
-            step.setText("No disponible");
+            step.setText(sensor_no_disp);
         }
 
-        //if (mHumi!= null) {
-        //    sensorManager.registerListener(this, mHumi, SensorManager.SENSOR_DELAY_NORMAL);
-        //    Log.d(TAG, "onResume: Registrando el sensor de humedad relativa");
-        //}else{humi.setText("No disponible");}
-        //if (mTemp!= null) {
-        //    sensorManager.registerListener(this, mTemp, SensorManager.SENSOR_DELAY_NORMAL);
-        //    Log.d(TAG, "onResume: Registrando el sensor de temperatura");
-        //}else{temp.setText("No disponible");}
-        //if (mPressure!= null) {
-        //    sensorManager.registerListener(this, mPressure, SensorManager.SENSOR_DELAY_NORMAL);
-        //    Log.d(TAG, "onResume: Registrando el sensor de presion");
-        //}else{pressure.setText("No disponible");}
+        if (mHumi != null) {
+            sensorManager.registerListener(this, mHumi, SensorManager.SENSOR_DELAY_NORMAL);
+            Log.d(TAG, "onResume: Registrando el sensor de humedad relativa");
+        } else {
+            humi.setText(sensor_no_disp);
+        }
+        if (mTemp != null) {
+            sensorManager.registerListener(this, mTemp, SensorManager.SENSOR_DELAY_NORMAL);
+            Log.d(TAG, "onResume: Registrando el sensor de temperatura");
+        } else {
+            temp.setText(sensor_no_disp);
+        }
+        if (mPressure != null) {
+            sensorManager.registerListener(this, mPressure, SensorManager.SENSOR_DELAY_NORMAL);
+            Log.d(TAG, "onResume: Registrando el sensor de presion");
+        } else {
+            press.setText(sensor_no_disp);
+        }
+        if (mProx != null) {
+            sensorManager.registerListener(this, mProx, SensorManager.SENSOR_DELAY_NORMAL);
+            Log.d(TAG, "onResume: Registrando el sensor de proximidad");
+        } else {
+            prox.setText(sensor_no_disp);
+        }
     }
 
     @Override
@@ -204,11 +257,16 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         super.onPause();
         sensorManager.unregisterListener(this, rVector);
         sensorManager.unregisterListener(this, mGravity);
+        sensorManager.unregisterListener(this, mLinAcce);
         sensorManager.unregisterListener(this, mAcce);
         sensorManager.unregisterListener(this, mGyro);
         sensorManager.unregisterListener(this, mMagno);
         sensorManager.unregisterListener(this, mLight);
         sensorManager.unregisterListener(this, mStepCounter);
+        sensorManager.unregisterListener(this, mPressure);
+        sensorManager.unregisterListener(this, mTemp);
+        sensorManager.unregisterListener(this, mHumi);
+        sensorManager.unregisterListener(this, mProx);
 
     }
 }
