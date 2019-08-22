@@ -19,10 +19,10 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
 
     private static final String TAG = SensorActivity.class.getSimpleName();
 
+    // Declaración de variables globales
     private SensorManager sensorManager;
-    private Sensor mAcce, mGyro, mMagno, mLight, mStepCounter, mLinAcce, mGravity, rVector;
-    private Sensor mHumi, mTemp, mPressure, mProx;
-
+    private Sensor mAcce, mGyro, mMagno, mLight, mStepCounter, mGravity,
+            mHumi, mTemp, mPressure, mProx;
     private TextView xAccValue, yAccValue, zAccValue,
             xGyroValue, yGyroValue, zGyroValue,
             xMagValue, yMagValue, zMagValue,
@@ -35,6 +35,8 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         setContentView(R.layout.activity_sensor);
 
         Log.d(TAG, "onCreate: Inicializando sensores");
+
+        //Inicialización de las variables globales
 
         xAccValue = findViewById(R.id.xAccValue);
         yAccValue = findViewById(R.id.yAccValue);
@@ -53,7 +55,6 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         zGravValue = findViewById(R.id.zGravValue);
 
         light = findViewById(R.id.light);
-
         step = findViewById(R.id.steps);
         humi = findViewById(R.id.humi);
         temp = findViewById(R.id.temp);
@@ -67,16 +68,11 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         mMagno = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         mLight = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         mStepCounter = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
-        mLinAcce = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
         mHumi = sensorManager.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
         mTemp = sensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
         mPressure = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
         mProx = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
-        /* GRAVITY SENSOR */
         mGravity = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
-        rVector = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
-
-
     }
 
     @Override
@@ -84,6 +80,9 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
 
     }
 
+    /**
+     * Presenta los datos de cada sensor en los correspondientes TextView
+     * */
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         Sensor sensor = sensorEvent.sensor;
@@ -167,28 +166,14 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
     protected void onResume() {
         super.onResume();
 
-        if (rVector != null) {
-            sensorManager.registerListener(this, rVector, SensorManager.SENSOR_DELAY_NORMAL);
-            Log.d(TAG, "onResume: Registrando Rotation Vector");
-        } else {
-            Log.d(TAG, "onResume: Rotation Vector NO DISPONIBLE");
-        }
-
+        //Registramos un escuchador a cada sensor para obtener sus datos
+        // Previa verificación de su correcta inicialización
         if (mGravity != null) {
             sensorManager.registerListener(this, mGravity, SensorManager.SENSOR_DELAY_NORMAL);
             Log.d(TAG, "onResume: Registrando el sensor de gravedad");
         } else {
             Log.d(TAG, "onResume: Gravity sensor NO DISPONIBLE");
         }
-
-        if (mLinAcce != null) {
-            sensorManager.registerListener(this, mLinAcce, SensorManager.SENSOR_DELAY_NORMAL);
-            Log.d(TAG, "onResume: Registrando el sensor acelerometro lineal");
-        } else {
-            Log.d(TAG, "onResume: Linear Acceleration NO DISPONIBLE");
-
-        }
-
         if (mAcce != null) {
             sensorManager.registerListener(this, mAcce, SensorManager.SENSOR_DELAY_NORMAL);
             Log.d(TAG, "onResume: Registrando el sensor acelerometro");
@@ -225,7 +210,6 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         } else {
             step.setText(sensor_no_disp);
         }
-
         if (mHumi != null) {
             sensorManager.registerListener(this, mHumi, SensorManager.SENSOR_DELAY_NORMAL);
             Log.d(TAG, "onResume: Registrando el sensor de humedad relativa");
@@ -252,12 +236,13 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         }
     }
 
+    /**
+     * Desactiva los escuchadores de los sensores cuando la aplicación pasa a segundo plano
+     * */
     @Override
     protected void onPause() {
         super.onPause();
-        sensorManager.unregisterListener(this, rVector);
         sensorManager.unregisterListener(this, mGravity);
-        sensorManager.unregisterListener(this, mLinAcce);
         sensorManager.unregisterListener(this, mAcce);
         sensorManager.unregisterListener(this, mGyro);
         sensorManager.unregisterListener(this, mMagno);
@@ -267,6 +252,5 @@ public class SensorActivity extends AppCompatActivity implements SensorEventList
         sensorManager.unregisterListener(this, mTemp);
         sensorManager.unregisterListener(this, mHumi);
         sensorManager.unregisterListener(this, mProx);
-
     }
 }

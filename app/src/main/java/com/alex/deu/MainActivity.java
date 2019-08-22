@@ -16,6 +16,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
     }
+    /**
+     * Métodos onClick de los botones que lanzan las actividades
+     *
+     * */
 
     public void startSensorActivity(View view) {
         Log.d(LOG_TAG, "Sensor Activity started!!");
@@ -29,11 +33,6 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    public void startStatiticsActivity(View view) {
-        Log.d(LOG_TAG, "Statistics Activity started!!");
-        Intent intent = new Intent(this, StatisticsActivity.class);
-        startActivity(intent);
-    }
 
     public void startTurnActivity(View view) {
         Log.d(LOG_TAG, "Statistics Activity started!!");

@@ -23,8 +23,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 
 import static java.lang.Math.abs;
@@ -98,6 +100,7 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
     @Override
     protected void onDestroy() {
         startStop(stop_button);
+        locationManager.removeUpdates(this);
         super.onDestroy();
     }
 
@@ -301,14 +304,14 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
                     this, Manifest.permission.ACCESS_FINE_LOCATION)) {
                 //...Mostrar algun mensaje explicando porqué necesitamos permisos de localizacion
                 Log.d(TAG, "Explanation: se requiere acceso a la ubicacion.");
-            } else {
+            }
                 // Solicitar permisos de localización --> implementar onRequestPermissionsResult()
                 ActivityCompat.requestPermissions(this,
                         new String[]{
                                 android.Manifest.permission.ACCESS_COARSE_LOCATION,
                                 android.Manifest.permission.ACCESS_FINE_LOCATION,},
                         REQUEST_LOCATION);
-            }
+
             return false;
         } else {
             Log.d(TAG, "Permisos de localización disponibles, obteniendo localización...");
@@ -360,6 +363,12 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
 
             } else {
                 Log.e(TAG, "No hay permisos para obtener localización.");
+                Toast toast = Toast.makeText(
+                        this,
+                        "Se requiere acceso a la ubicación para determinar la velocidad de desplazamiento.",
+                        Toast.LENGTH_LONG);
+                toast.show();
+                finish();
                 //Acciones necesarias si aplica
             }
         }
@@ -466,10 +475,9 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
         @Override
         protected void onPostExecute(Integer integer) {
             super.onPostExecute(integer);
-
-            velocity_tv.setText("" + vel_med);
-            anglechange_tv.setText("" + angle_change);
-            radio_tv.setText("" + radio_giro);
+            velocity_tv.setText(String.format(Locale.getDefault(),"%2f", vel_med));
+            anglechange_tv.setText(String.format(Locale.getDefault(), "%2f", angle_change));
+            radio_tv.setText(String.format(Locale.getDefault(), "%2f", radio_giro));
             if (radio_giro > 0) {
                 if (angle_change < 0) {
                     turning.setImageResource(R.drawable.ic_arrow_back_black);
