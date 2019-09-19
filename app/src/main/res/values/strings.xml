@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Detección de Elementos Urbanos</string>
+    <string name="app_name">DEU</string>
     <string name="activity_sensor_name">Sensor Activity</string>
     <string name="activity_register_name">Register Activity</string>
     <string name="button_start">START</string>
@@ -15,7 +15,7 @@
     <string name="button_delete">Borrar Último</string>
     <string name="text_button_estadisticos">Estadisticos</string>
     <string name="activity_turn_name">Turn Activity</string>
-    <string name="button_turn">Turn</string>
+    <string name="button_turn">Detección de giros</string>
     <string name="titleAcc">Acelerómetro</string>
     <string name="titleGrav">Gravedad</string>
     <string name="sensor_no_disp">No disponible</string>
@@ -24,4 +24,11 @@
     <string name="titlePress">Presión Atmosférica</string>
     <string name="titleProx">Proximidad</string>
     <string name="mensajeSolicitudPermisosLocalizacion">Se requiere acceso a la ubicación para obtener la velocidad de desplazamiento.</string>
+    <string name="data_reg_warn">Registrando datos</string>
+    <string name="file_reg_warn">Generando ficheros</string>
+    <string name="introduzca_nombre_de_fichero">Introduzca nombre de fichero</string>
+    <string name="turn_velocity_tittle">Velocidad (m/s):</string>
+    <string name="cambio_orientacion_title">Cambio orientacion (rad/s):</string>
+    <string name="radio_de_giro_title">Radio de giro:</string>
+    <string name="direccion_de_giro">Dirección de giro</string>
 </resources>

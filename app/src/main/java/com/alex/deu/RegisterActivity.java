@@ -1,6 +1,7 @@
 package com.alex.deu;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
@@ -40,7 +41,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
     private static final String TAG = RegisterActivity.class.getSimpleName();
 
-    private static final int m = 9000, n = 3;
+    private static final int m = 9000;//n = 3;
     private static final int delay = 20000;
     // Para 10000 microseconds con 6000 muestras (m) tenemos 1 minutos de datos (100 muestras por s)
     // Para DELAY_GAME con 3000 muestras (m), una cada 20,000 micro.s, tenemos 1 minutos de datos
@@ -205,7 +206,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         start.setEnabled(false);
         stop.setEnabled(true);
 
-        textData.setText("REGISTRANDO DATOS...");
+        textData.setText(getString(R.string.data_reg_warn));
 
         if (mAcce != null) {
             //acc_data_line = 0;
@@ -248,7 +249,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
 
     /**
-     * Desactiva los escuchadores de los sensores, deja de guardar susdatos y reinicia los vectores de datos
+     * Desactiva los escuchadores de los sensores y se inicia la generación de archivos
      */
     public void stopRegister(View view) {
         sensorManager.unregisterListener(this, mMag);
@@ -270,28 +271,36 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
      * SIN UTILIDAD
      */
     public String sensorDataToString(float[][] datos) {
-        String stringData = "";
+        StringBuilder stringData = new StringBuilder();
         int i;
         for (i = 0; i < m; i++) {
 
             if (datos[i][0] == 0f) {
-                return stringData;
+                return stringData.toString();
             } else {
                 if (i == 0) {
-                    stringData += datos[i][0] + "\t" +
-                            datos[i][1] + "\t" +
-                            datos[i][2] + "\t" +
-                            datos[i][3];
+                    stringData
+                            .append(datos[i][0])
+                            .append("\t")
+                            .append(datos[i][1])
+                            .append("\t")
+                            .append(datos[i][2])
+                            .append("\t")
+                            .append(datos[i][3]);
                 } else {
-                    stringData += "\n" +
-                            datos[i][0] + "\t" +
-                            datos[i][1] + "\t" +
-                            datos[i][2] + "\t" +
-                            datos[i][3];
+                    stringData
+                            .append("\n")
+                            .append(datos[i][0])
+                            .append("\t")
+                            .append(datos[i][1])
+                            .append("\t")
+                            .append(datos[i][2])
+                            .append("\t")
+                            .append(datos[i][3]);
                 }
             }
         }
-        return stringData;
+        return stringData.toString();
     }
 
 
@@ -323,7 +332,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     @Override
     public void onSensorChanged(SensorEvent event) {
         float mod_grav;
-        float[] prevR;
         float ts;
 
         switch (event.sensor.getType()) {
@@ -336,7 +344,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 //Log.d(TAG, "magnetic_data.size(): " + magnetic_data.size());
                 //Log.d(TAG, "Magnetic timestamp: " + event.timestamp);
                 // ROTATION MATRIX
-                prevR = rotMatrix;
                 boolean check = SensorManager.getRotationMatrix(rotMatrix, null, gravity, magnetic);
                 if (check) {
                     // Si se ha obtenido de forma correcta la matriz de rotacion
@@ -483,10 +490,11 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
      * El valor original está en m/s y se pasa a K/h
      */
     @Override
-    public void onLocationChanged(Location location) {
-        speed = location.getSpeed() * 3600 / 1000; // Velocidad en kilometros por hora
+    public void onLocationChanged(Location loc) {
+        speed = loc.getSpeed() * 3600 / 1000; // Velocidad en kilometros por hora
+        location = loc;
         Log.d(TAG, "Location: " + location + "\nSpeed: " + speed);
-        String str = String.format(Locale.getDefault(), "%s %.1f", "Speed:", speed);
+        String str = String.format(Locale.getDefault(), "%s %.1f", "Velocidad (km/h):", speed);
         textSpeed.setText(str);
         //Toast.makeText(getContext(),"Speed: " + speed, Toast.LENGTH_SHORT).show();
     }
@@ -514,8 +522,11 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
      * Fuente: https://stackoverflow.com/questions/40142331/how-to-request-location-permission-at-runtime
      */
     public boolean checkLocationPermission() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (
+                ActivityCompat.checkSelfPermission(
+                        this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                        && ActivityCompat.checkSelfPermission(
+                        this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.ACCESS_FINE_LOCATION)) {
@@ -539,11 +550,11 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
             provider = locationManager.getBestProvider(new Criteria(), false);
             //Obtener localización
             if (provider != null) {
-                locationManager.requestLocationUpdates(provider, 200, 0, this);
+                locationManager.requestLocationUpdates(provider, 150, 0, this);
                 // minTime en milisegundos
                 // minDistance en metros
                 location = locationManager.getLastKnownLocation(provider);
-                onLocationChanged(location);
+                //onLocationChanged(location);
                 return true;
             } else {
                 Log.e(TAG, "Error obteniendo localizaión. Error de provider.");
@@ -571,12 +582,13 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                     provider = locationManager.getBestProvider(new Criteria(), false);
                     //Solicitar localizacion
                     if (provider != null) {
-                        locationManager.requestLocationUpdates(provider, 200, 0, this);
+                        locationManager.requestLocationUpdates(provider, 150, 0, this);
                         // minTime en milisegundos
                         // minDistance en metros
                         location = locationManager.getLastKnownLocation(provider);
-                        onLocationChanged(location);
-
+                        if (location != null) {
+                            onLocationChanged(location);
+                        }
                     } else {
                         Log.e(TAG, "Error obteniendo localización. Error Provider.");
                     }
@@ -598,13 +610,14 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
      * Clase Async Task para la generación de los ficheros
      * sin parar el hilo de ejecucion principal de la app
      */
+    @SuppressLint("StaticFieldLeak")
     public class CreateFiles extends AsyncTask<String, Integer, Integer> {
         private static final String TAG = "CreateFiles";
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            textData.setText("GENERANDO FICHEROS...");
+            textData.setText(getString(R.string.file_reg_warn));
         }
 
         @Override
@@ -658,11 +671,12 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 publishProgress();
             }
 
+            /*
             if (rotMatrix_data != null) {
                 Log.d(TAG, "Creating FILE rotMatrix_data...");
-                //rotMat_str = listToString(rotMatrix_data);
-                //makeDataFile(rotMat_str, 6);
-                //Log.d(TAG, "Matriz de rotacion:\n" + matrixString);
+                rotMat_str = listToString(rotMatrix_data);
+                makeDataFile(rotMat_str, 6);
+                Log.d(TAG, "Matriz de rotacion:\n" + matrixString);
                 rotMatrix_data.clear();
                 publishProgress();
             }
@@ -675,6 +689,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 rotMatrix_ts.clear();
                 publishProgress();
             }
+            */
             if (orientation_data != null) {
                 Log.d(TAG, "Creating FILE orientation_data...");
                 orientation_str = listToString(orientation_data);
@@ -707,16 +722,16 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
          * @return string listo para imprimir en un fichero
          */
         private String listToString(ArrayList<float[]> list) {
-            String str = "";
+            StringBuilder str = new StringBuilder();
             if (list != null) {
                 if (list.size() > 0) {
                     for (int r = 0; r < list.size(); r++) {
                         for (int i = 0; i < list.get(r).length - 1; i++) {
-                            str += list.get(r)[i] + ", ";
+                            str.append(list.get(r)[i]).append(", ");
                         }
-                        str += list.get(r)[list.get(r).length - 1] + "\n";
+                        str.append(list.get(r)[list.get(r).length - 1]).append("\n");
                     }
-                    return str;
+                    return str.toString();
                 }
             }
             return "";
@@ -786,12 +801,12 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                     filename = "orientation_" + name + extension;
                     break;
                 default:
-                    filename = name + extension;
+                    filename = "000" + name + extension;
                     break;
             }
-            //Crear fichero
+
             File directory = getContext().getFilesDir();
-            File file = new File(directory, filename);
+            new File(directory, filename);//Crear fichero
             FileOutputStream outputStream;
             //Escribir datos en el fichero
             try {

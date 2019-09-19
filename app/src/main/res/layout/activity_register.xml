@@ -56,15 +56,17 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
-        android:hint="Introduzca nombre de fichero..."
+        android:hint="@string/introduzca_nombre_de_fichero"
         android:inputType="text"
         android:text=""
         app:layout_constraintBottom_toTopOf="@id/linear_layout_buttons"
         app:layout_constraintTop_toBottomOf="@id/scroll_view"
+        tools:ignore="Autofill"
         tools:layout_editor_absoluteX="8dp" />
 
     <LinearLayout
         android:id="@+id/linear_layout_buttons"
+        style="?android:attr/buttonBarStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -73,6 +75,7 @@
 
         <Button
             android:id="@+id/button_start"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -85,6 +88,7 @@
 
         <Button
             android:id="@+id/button_stop"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -96,6 +100,7 @@
             android:text="@string/button_stop" />
 
         <Button
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"

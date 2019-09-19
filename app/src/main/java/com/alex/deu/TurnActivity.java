@@ -1,6 +1,7 @@
 package com.alex.deu;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
@@ -25,15 +26,19 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Locale;
-
 
 import static java.lang.Math.abs;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 
 public class TurnActivity extends AppCompatActivity implements SensorEventListener, LocationListener {
+
+    Context mContext;
 
     private long i_interval;
 
@@ -140,12 +145,19 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
                         //i_interval = ts;
                         //Log.d(TAG,"AZ: " + az_array[10].toString());
                         //Object[] objectArray = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+                        Object[] loc = new Object[]{0.0,0.0};
+                        if(location != null) {
+                            loc[0] = location.getLatitude();
+                            loc[1] = location.getLongitude();
+                        }
                         new TurnDetection().execute(
                                 az.toArray(),
                                 gz.toArray(),
                                 azimuth.toArray(),
                                 velocity.toArray(),
-                                timestamp.toArray());
+                                timestamp.toArray(),
+                                loc
+                        );
                         az.clear();
                         gz.clear();
                         azimuth.clear();
@@ -266,9 +278,10 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
      * Metodos de LocationManager
      */
     @Override
-    public void onLocationChanged(Location location) {
+    public void onLocationChanged(Location loc) {
         speed = location.getSpeed(); // Velocidad en metros por segundo
-        //Log.d(TAG, "Location: " + location + "\nSpeed: " + speed);
+        location = loc;
+        Log.d(TAG, "Location: " + location + "\nSpeed: " + speed);
     }
 
     @Override
@@ -299,18 +312,21 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
                         && ActivityCompat.checkSelfPermission(
                         this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
-            // Should we show an explanation?
-            if (ActivityCompat.shouldShowRequestPermissionRationale(
-                    this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                //...Mostrar algun mensaje explicando porqué necesitamos permisos de localizacion
-                Log.d(TAG, "Explanation: se requiere acceso a la ubicacion.");
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+                // Mostrar mensaje explicando porqué necesitamos permisos de localizacion
+                Toast toast = Toast.makeText(this,
+                        getString(R.string.mensajeSolicitudPermisosLocalizacion), Toast.LENGTH_LONG);
+                toast.show();
+                Log.d(TAG, getString(R.string.mensajeSolicitudPermisosLocalizacion));
             }
-                // Solicitar permisos de localización --> implementar onRequestPermissionsResult()
-                ActivityCompat.requestPermissions(this,
-                        new String[]{
-                                android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                                android.Manifest.permission.ACCESS_FINE_LOCATION,},
-                        REQUEST_LOCATION);
+
+            // Solicitar permisos de localización --> implementar onRequestPermissionsResult()
+            ActivityCompat.requestPermissions(this,
+                    new String[]{
+                            android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                            android.Manifest.permission.ACCESS_FINE_LOCATION,},
+                    REQUEST_LOCATION);
 
             return false;
         } else {
@@ -318,7 +334,7 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
             provider = locationManager.getBestProvider(new Criteria(), false);
             //Solicitar localizacion
             if (provider != null) {
-                locationManager.requestLocationUpdates(provider, 200, 0, this);
+                locationManager.requestLocationUpdates(provider, 150, 0, this);
                 //minTime en milisegundos
                 // minDistance en metros
                 location = locationManager.getLastKnownLocation(provider);
@@ -351,7 +367,7 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
                     provider = locationManager.getBestProvider(new Criteria(), false);
                     //Solicitar localizacion
                     if (provider != null) {
-                        locationManager.requestLocationUpdates(provider, 200, 0, this);
+                        locationManager.requestLocationUpdates(provider, 150, 0, this);
                         //minTime en milisegundos
                         // minDistance en metros
                         location = locationManager.getLastKnownLocation(provider);
@@ -369,15 +385,18 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
                         Toast.LENGTH_LONG);
                 toast.show();
                 finish();
-                //Acciones necesarias si aplica
             }
         }
     }
 
+    public Context getContext() {
+        return this.mContext = this;
+    }
 
     /**
      * Clase AsyncTask
      */
+    @SuppressLint("StaticFieldLeak")
     public class TurnDetection extends AsyncTask<Object[], Integer, Integer> {
 
         private double angle_change;
@@ -390,25 +409,34 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
 
             long tic = System.nanoTime();
 
-            //double[] az = objectToDoubletArray(sensorData[0]);
-            //double[] gz = objectToDoubletArray(sensorData[1]);
-            double[] azi = objectToDoubletArray(sensorData[2]);
-            double[] vel = objectToDoubletArray(sensorData[3]);
+            //double[] az = objectToDoubleArray(sensorData[0]);
+            //double[] gz = objectToDoubleArray(sensorData[1]);
+            double[] azi = objectToDoubleArray(sensorData[2]);
+            double[] vel = objectToDoubleArray(sensorData[3]);
             Object[] ts = sensorData[4];
+            Object[] localizacion = sensorData[5];
+            double[] loc = {(double) localizacion[0],(double) localizacion[1]};
             double t = (double) ((long) ts[ts.length - 1] - (long) ts[0]);
 
             double[] azi_rect = rectAzimuth(azi);
-            angle_change = (azi_rect[azi_rect.length - 1] - azi_rect[0]);
+            angle_change = angleChange(azi_rect);
             vel_med = media(vel);
-            radio_giro = radioGiro(angle_change, vel_med, t);
+            radio_giro = radioGiro(angle_change, vel_med, t, loc);
 
+            publishProgress();//actualizamos la interfaz de usuario
 
-            long toc = (System.nanoTime() - tic);
-            Log.d(TAG, "Tiempo de ejecución de TurnDetection (ns): " + toc);
+            long toc = (System.nanoTime() - tic)/1000000;//pasado a milisegundos
+            Log.d(TAG, "Tiempo de ejecución de TurnDetection (ms): " + toc);
             return null;
         }
 
-        private double[] objectToDoubletArray(Object[] objects) {
+
+        private double angleChange(double[] azi_rect) {
+
+            return (azi_rect[azi_rect.length - 1] - azi_rect[0]);
+        }
+
+        private double[] objectToDoubleArray(Object[] objects) {
             double[] doubles = new double[objects.length];
             for (int i = 0; i < objects.length; i++) {
                 doubles[i] = (double) (float) objects[i];
@@ -417,7 +445,9 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
             return doubles;
         }
 
+
         private double media(double[] datos) {
+            //Calcula la media de un conjunto de datos
             double result = 0;
             for (double dato : datos) {
                 result += dato;
@@ -427,13 +457,17 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
 
 
         private double[] rectAzimuth(double[] azimuth) {
-            int i = 0;
+            //Rectifica azimut para eliminar discontinuidades
+            //int i = 0;
+            int i;
             int l = azimuth.length;
+            /*
             while (i < l) {
                 azimuth[i] += Math.PI;
                 i++;
             }
-            double margen_rect = 0.97 * 2 * Math.PI;
+            */
+            double margen_rect = 6.10865;// ~ 350 grados
             for (i = 1; i < l; i++) {
                 if ((azimuth[i] - azimuth[i - 1]) < -margen_rect) {
                     for (int r = i; r < l; r++) {
@@ -449,35 +483,93 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
             return azimuth;
         }
 
-        private double radioGiro(double angle_change, double speed, double time) {
-            double r;
-            double umbral_angulo = Math.PI*(0.06);//11 grados = 0.061111 PI radianes
-            angle_change = abs(angle_change);
+        private double radioGiro(double angle_change, double speed, double time, double[] loc) {
+            double r=0;
+            double umbral_angulo = 0.0872665;//~5 grados
+            double umbral_vel = 0.56;// umbral de velocidad en m/s 0.56 m/s ~= 2 km/h
             time = time / 1000000000; // de nanosegundos a segundos
-            Log.d(TAG,"TIME: " + time);
-            // Si el cambio de angulo es de 12 grados o mas, caluculamos el raid ode giro
+            Log.d(TAG, "TIME: " + time);
+            // Si el cambio de angulo es de 5 grados o mas, caluculamos el radio de giro
             // Sirve para evitar el calculo de radios de giro demasiado grandes
             // que pueden interpretarse como ruido al andar en linea recta
-            if (angle_change > umbral_angulo) {
-                // velocidad en m/s
-                // tiempo en segundos
-                // angulo de giro en radianes
-                // longitudes en metros
-
-                double longitud = speed * time;// metros
-                r = longitud / angle_change;
+            // Del mismo modo se coloca un umbral de velocidad para calcular el radio de giro
+            if (speed > umbral_vel) {
+                if (abs(angle_change) > umbral_angulo) {
+                    // velocidad en m/s
+                    // tiempo en segundos
+                    // angulo de giro en radianes
+                    // longitud y radio en metros
+                    double longitud = speed * time;
+                    r = longitud / abs(angle_change);
+                    registrarDeteccion(angle_change, speed, r, loc);
+                }
             } else {
                 r = 0;
             }
             return r;
         }
 
+        private void registrarDeteccion(double angle_change, double speed, double radio_giro, double[] loc) {
+            // si angle_change mayor que 0 giro a la derecha
+            int sentido = 0;
+            if (angle_change > 0) {
+                sentido = 1;// derecha
+            } else if (angle_change < 0) {
+                sentido = -1;// izquierda
+            }
+
+            Calendar c = Calendar.getInstance();
+            int sec = c.get(Calendar.SECOND);
+            int min = c.get(Calendar.MINUTE);
+            int hour = c.get(Calendar.HOUR_OF_DAY);
+            int day = c.get(Calendar.DAY_OF_MONTH);
+            int month = 1 + c.get(Calendar.MONTH);
+            int year = c.get(Calendar.YEAR);
+            String fecha = year + "-" + month + "-" + day + "_" + hour + ":" + min + ":" + sec;
+            String filename = "registro.txt";
+            // String que contiene los datos de la detección del giro
+            String registro =
+                    sentido + "\t" +
+                            String.format(Locale.getDefault(), "%.2f", angle_change) + "\t" +
+                            String.format(Locale.getDefault(), "%.2f", speed) + "\t" +
+                            String.format(Locale.getDefault(), "%.2f", radio_giro) + "\t" +
+                            String.format(Locale.getDefault(), "%.8f", loc[0]) + "\t" +
+                            String.format(Locale.getDefault(), "%.8f", loc[1]) + "\t" +
+                            fecha + "\n";
+            File directory = getContext().getFilesDir();
+            //Escribe en fichero o lo crea si no existe
+
+            boolean existe = false;
+            for (int i = 0; i < fileList().length; i++) {
+                // Comprebamos si el fichero de registros ya ha sido creado
+                if (fileList()[i].equals(filename)) {
+                    existe = true;
+                    break;
+                }
+            }
+            if (!existe) {
+                // Si no existe el fichero de registros se crea
+                new File(directory, filename);
+            }
+            FileOutputStream fileOutputStream;
+            try {
+                //Escribir datos de la detección en el fichero
+                // modo de adición de contenido
+                fileOutputStream = openFileOutput(filename, Context.MODE_APPEND);
+                fileOutputStream.write(registro.getBytes());
+                // Escritura del String de datos (String data) en el fichero de texto
+                fileOutputStream.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         @Override
-        protected void onPostExecute(Integer integer) {
-            super.onPostExecute(integer);
-            velocity_tv.setText(String.format(Locale.getDefault(),"%2f", vel_med));
-            anglechange_tv.setText(String.format(Locale.getDefault(), "%2f", angle_change));
-            radio_tv.setText(String.format(Locale.getDefault(), "%2f", radio_giro));
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+            velocity_tv.setText(String.format(Locale.getDefault(), "%.2f", vel_med));
+            anglechange_tv.setText(String.format(Locale.getDefault(), "%.2f", angle_change));
+            radio_tv.setText(String.format(Locale.getDefault(), "%.2f", radio_giro));
             if (radio_giro > 0) {
                 if (angle_change < 0) {
                     turning.setImageResource(R.drawable.ic_arrow_back_black);
@@ -489,6 +581,7 @@ public class TurnActivity extends AppCompatActivity implements SensorEventListen
             }
 
             Log.d(TAG, "\nVelocidad: " + vel_med + "\nAngleChange/sec: " + angle_change + "\nRadio giro: " + radio_giro);
+
         }
     }
 }
