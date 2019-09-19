@@ -41,7 +41,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
 
     private static final String TAG = RegisterActivity.class.getSimpleName();
 
-    private static final int m = 9000;//n = 3;
+    //private static final int m = 9000;//n = 3;
     private static final int delay = 20000;
     // Para 10000 microseconds con 6000 muestras (m) tenemos 1 minutos de datos (100 muestras por s)
     // Para DELAY_GAME con 3000 muestras (m), una cada 20,000 micro.s, tenemos 1 minutos de datos
@@ -68,15 +68,11 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
     private ArrayList<float[]> acc_data;
     //private int acc_data_line = 0;
 
-    // LINEAR ACCELEROMETER
-    //private float[][] lin_acc_data;
-    private ArrayList<float[]> lin_data;
 
     //Proyeccion de la aceleración lineal sobre el vector gravedad
     private ArrayList<float[]> acc_proj_data;
 
     // GYROSCOPE
-    //private float[][] gyr_data_array;
     private ArrayList<float[]> gyr_data;
     //private int gyr_data_line = 0;
     //Proyección del giroscopio sobre gravedad
@@ -91,8 +87,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
      * Matriz de rotacion
      */
     private float[] rotMatrix;
-    private ArrayList<float[]> rotMatrix_data;//se almacenan todos los cambios de la matriz
-    private ArrayList<Long> rotMatrix_ts;
+
 
 
     private String provider;
@@ -140,16 +135,13 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         //gyr_data_array = new float[m][n + 1];
 
         acc_data = new ArrayList<>();//float[]
-        lin_data = new ArrayList<>();//float[]
         gyr_data = new ArrayList<>();//float[]
 
         gravity = new float[3];
         magnetic = new float[3];
         acc_proj_data = new ArrayList<>();//float[]
         gyr_proj_data = new ArrayList<>();//float[]
-        rotMatrix_data = new ArrayList<>();//float[]
         rotMatrix = new float[9];
-        rotMatrix_ts = new ArrayList<>();//Long
         orientation_data = new ArrayList<>();//float[]
         orientation = new float[3];
 
@@ -229,14 +221,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         } else {
             Log.d(TAG, "startRegister: MAGNETIC FIELD NO DISPONIBLE");
         }
-        /*
-        if (mRotVector != null) {
-            sensorManager.registerListener(this, mRotVector, delay);
-            Log.d(TAG, "startRegister: Registrando el sensor ROTATION VECTOR");
-        } else {
-            Log.d(TAG, "startRegister: ROTATION VECTOR NO DISPONIBLE");
-        }
-        */
 
         if (mGravity != null) {
             //sensorManager.registerListener(this, mGravity, delay);
@@ -263,44 +247,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
         if (!orientation_data.isEmpty()) {
             new CreateFiles().execute("Creando archivos...");
         }
-    }
-
-    /**
-     * Recibe los datos brutos de los sensores en un array 2D
-     * y les da formato de String para grabarlos en fichero posteriormente
-     * SIN UTILIDAD
-     */
-    public String sensorDataToString(float[][] datos) {
-        StringBuilder stringData = new StringBuilder();
-        int i;
-        for (i = 0; i < m; i++) {
-
-            if (datos[i][0] == 0f) {
-                return stringData.toString();
-            } else {
-                if (i == 0) {
-                    stringData
-                            .append(datos[i][0])
-                            .append("\t")
-                            .append(datos[i][1])
-                            .append("\t")
-                            .append(datos[i][2])
-                            .append("\t")
-                            .append(datos[i][3]);
-                } else {
-                    stringData
-                            .append("\n")
-                            .append(datos[i][0])
-                            .append("\t")
-                            .append(datos[i][1])
-                            .append("\t")
-                            .append(datos[i][2])
-                            .append("\t")
-                            .append(datos[i][3]);
-                }
-            }
-        }
-        return stringData.toString();
     }
 
 
@@ -384,34 +330,12 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 CALCULO DE ACELERACION LINEAL
                 Fuente: https://developer.android.com/guide/topics/sensors/sensors_motion#java
                 */
-                /*
-                    // Suavizado de la gravedad
-                    // In this example, alpha is calculated as t / (t + dT),
-                    // where t is the low-pass filter's time-constant and
-                    // dT is the event delivery rate.
-                    final float alpha = 0.8f;
-                    // Isolate the force of gravity with the low-pass filter.
-                    gravity[0] = alpha * gravity[0] + (1 - alpha) * event.values[0];
-                    gravity[1] = alpha * gravity[1] + (1 - alpha) * event.values[1];
-                    gravity[2] = alpha * gravity[2] + (1 - alpha) * event.values[2];
-
-
-                    // Remove the gravity contribution with the high-pass filter.
-                    lin_acc_data[acc_data_line][0] = event.values[0] - gravity[0];
-                    lin_acc_data[acc_data_line][1] = event.values[1] - gravity[1];
-                    lin_acc_data[acc_data_line][2] = event.values[2] - gravity[2];
-                    lin_acc_data[acc_data_line][3] = event.timestamp;
-*/
                 float[] linear_acceleration = new float[3];
                 linear_acceleration[0] = event.values[0] - gravity[0];
                 linear_acceleration[1] = event.values[1] - gravity[1];
                 linear_acceleration[2] = event.values[2] - gravity[2];
 
-                lin_data.add(new float[]{
-                        linear_acceleration[0],
-                        linear_acceleration[1],
-                        linear_acceleration[2],
-                });
+
 
                 // Modulo del vector gravedad
                 mod_grav = (float) sqrt(pow(gravity[0], 2) + pow(gravity[1], 2) + pow(gravity[2], 2));
@@ -625,11 +549,8 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
             Log.d(TAG, strings[0]);
             String acc_str,
                     gyr_str,
-                    lin_str,
                     acc_proj_str,
                     gyr_proj_str,
-                    rotMat_str,
-                    rotMatTs_str = "",
                     orientation_str;
 
             if (acc_data != null) {
@@ -647,15 +568,7 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 gyr_data.clear();
                 publishProgress();
             }
-            if (lin_data != null) {
-                Log.d(TAG, "Creating FILE lin_data...");
-                lin_str = listToString(lin_data);
-                //makeDataFile(lin_str, 3);
-                //makeDataFile(lin_str, 3);
-                //lin_acc_data = null;
-                lin_data.clear();
-                publishProgress();
-            }
+
             if (acc_proj_data != null) {
                 Log.d(TAG, "Creating FILE acc_proj_data...");
                 acc_proj_str = listToString(acc_proj_data);
@@ -671,25 +584,6 @@ public class RegisterActivity extends AppCompatActivity implements SensorEventLi
                 publishProgress();
             }
 
-            /*
-            if (rotMatrix_data != null) {
-                Log.d(TAG, "Creating FILE rotMatrix_data...");
-                rotMat_str = listToString(rotMatrix_data);
-                makeDataFile(rotMat_str, 6);
-                Log.d(TAG, "Matriz de rotacion:\n" + matrixString);
-                rotMatrix_data.clear();
-                publishProgress();
-            }
-            if (rotMatrix_ts != null) {
-                Log.d(TAG, "Creating FILE rotMatrix_ts...");
-                for (int i = 0; i < rotMatrix_ts.size(); i++) {
-                    rotMatTs_str += rotMatrix_ts.get(i) + "\n";
-                }
-                //makeDataFile(rotMatTs_str, 7);
-                rotMatrix_ts.clear();
-                publishProgress();
-            }
-            */
             if (orientation_data != null) {
                 Log.d(TAG, "Creating FILE orientation_data...");
                 orientation_str = listToString(orientation_data);
